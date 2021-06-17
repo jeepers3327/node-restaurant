@@ -1,0 +1,134 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: >-
+  order-management-service code
+
+Transform:
+- AWS::Serverless-2016-10-31
+
+Resources:
+  getOrderFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: makefile
+    Properties:
+      CodeUri: app/
+      Handler: dist/src/handlers/get-order.handler
+      Runtime: nodejs12.x
+      MemorySize: 128
+      Timeout: 100
+      Description: Get a customers order
+      Policies:
+        # Give Create/Read/Update/Delete Permissions to the SampleTable
+        - DynamoDBReadPolicy:
+            TableName: !Ref OrderManagementTable
+      Environment:
+        Variables:
+          # Make table name accessible as environment variable from function code during execution
+          TABLE_NAME: !Ref OrderManagementTable
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /{customerId}/{orderNumber}
+            Method: GET
+
+  createOrderFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: makefile
+    Properties:
+      CodeUri: app/
+      Handler: dist/src/handlers/create-order.handler
+      Runtime: nodejs12.x
+      MemorySize: 128
+      Timeout: 100
+      Description: Create a new customer order
+      Policies:
+        # Give Create/Read/Update/Delete Permissions to the SampleTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref OrderManagementTable
+      Environment:
+        Variables:
+          # Make table name accessible as environment variable from function code during execution
+          TABLE_NAME: !Ref OrderManagementTable
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /{customerId}
+            Method: POST
+            
+  cancelOrderFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: makefile
+    Properties:
+      CodeUri: app/
+      Handler: dist/src/handlers/cancel-order.handler
+      Runtime: nodejs12.x
+      MemorySize: 128
+      Timeout: 100
+      Description: Cancel a customer order
+      Policies:
+        # Give Create/Read/Update/Delete Permissions to the SampleTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref OrderManagementTable
+      Environment:
+        Variables:
+          # Make table name accessible as environment variable from function code during execution
+          TABLE_NAME: !Ref OrderManagementTable
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /{customerId}/{orderNumber}/cancel
+            Method: POST
+            
+  orderDispatchedHandler:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: makefile
+    Properties:
+      CodeUri: app/
+      Handler: dist/src/handlers/order-dispatched-event.handler
+      Runtime: nodejs12.x
+      MemorySize: 128
+      Timeout: 100
+      Description: Handle an order dispatched event from the event bus.
+      Policies:
+        # Give Create/Read/Update/Delete Permissions to the SampleTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref OrderManagementTable
+      Environment:
+        Variables:
+          # Make table name accessible as environment variable from function code during execution
+          TABLE_NAME: !Ref OrderManagementTable
+      
+      Events:
+        Trigger:
+          Type: CloudWatchEvent 
+          Properties:
+            Pattern:
+              source:
+                - com.kitchen
+              detail-type:
+                - order-dispatched
+
+  OrderManagementTable:
+    Type: AWS::DynamoDB::Table
+    Properties: 
+      AttributeDefinitions: 
+        - AttributeName: PK
+          AttributeType: S 
+        - AttributeName: SK
+          AttributeType: S
+      KeySchema: 
+        - AttributeName: PK
+          KeyType: HASH 
+        - AttributeName: SK
+          KeyType: RANGE
+      BillingMode: PAY_PER_REQUEST
+Outputs:
+  WebEndpoint:
+    Description: "API Gateway endpoint URL for Prod stage"
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/"
