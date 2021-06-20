@@ -23,6 +23,8 @@ export class CancelOrderCommandHandler {
 
     order.cancel();
 
+    order.publish();
+
     this._orderRepo.update(order);
   }
 }

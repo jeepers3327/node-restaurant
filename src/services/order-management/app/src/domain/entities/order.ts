@@ -1,6 +1,9 @@
 import { Aggregate, IAggregate } from "node-js-ddd/dist/model/aggregate";
+import { DomainEvents } from "node-js-ddd/dist/events/domain-event-handling";
 import { Amount } from "./amount";
 import { IOrderDetails, OrderDetailFactory } from "./order-details";
+import { OrderCreatedEvent } from "../events/order-created/order-created";
+import { OrderCancelledEvent } from "../events/order-cancelled/order-cancelled";
 
 export interface IOrder extends IAggregate {
   readonly orderNumber: string;
@@ -37,18 +40,20 @@ export class OrderFactory {
     return order;
   }
 
-  static CreateFromJson(
-    json: string
-  ): IOrder {
+  static CreateFromJson(json: string): IOrder {
     if (json.length === 0) {
       throw Error("JSON cannot be empty");
     }
 
     const jsonObj = JSON.parse(json);
-    
-    const order = new Order(jsonObj['_customerId'], jsonObj['_orderNumber'], jsonObj['_orderDate']);
-    order._orderState = jsonObj['_orderState'];
-    order._details = jsonObj['_details'];
+
+    const order = new Order(
+      jsonObj["_customerId"],
+      jsonObj["_orderNumber"],
+      jsonObj["_orderDate"]
+    );
+    order._orderState = jsonObj["_orderState"];
+    order._details = jsonObj["_details"];
 
     return order;
   }
@@ -56,17 +61,13 @@ export class OrderFactory {
 
 class Order extends Aggregate implements IOrder {
   private _customerId: string;
-  
+
   _details: IOrderDetails;
   _orderDate: Date;
   _orderNumber: string;
   _orderState: string;
 
-  constructor(
-    customerId: string,
-    orderNumber: string,
-    orderDate: Date
-  ) {
+  constructor(customerId: string, orderNumber: string, orderDate: Date) {
     super(orderNumber);
 
     this._customerId = customerId;
@@ -81,6 +82,13 @@ class Order extends Aggregate implements IOrder {
       customerId,
       Order.generateNewOrderNumber(),
       new Date()
+    );
+
+    order.addDomainEvent(
+      new OrderCreatedEvent(order, {
+        orderNumber: order.orderNumber,
+        customerId: customerId,
+      })
     );
 
     return order;
@@ -137,6 +145,13 @@ class Order extends Aggregate implements IOrder {
     }
 
     this._orderState = "Cancelled";
+
+    this.addDomainEvent(
+      new OrderCancelledEvent(this, {
+        orderNumber: this.orderNumber,
+        customerId: this.customerId,
+      })
+    );
   }
 
   private static generateNewOrderNumber() {

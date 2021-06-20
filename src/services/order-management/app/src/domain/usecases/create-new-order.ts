@@ -25,6 +25,8 @@ export class CreateOrderCommandHandler {
 
     this._logger.logInformation(`Created order ${order.orderNumber}`);
 
+    order.publish();
+
     return order.orderNumber;
   }
 }

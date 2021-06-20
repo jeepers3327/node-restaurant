@@ -22,6 +22,8 @@ export class OrderDispatchedHandler {
 
     order.dispatch();
 
+    order.publish();
+
     this._orderRepo.update(order);
   }
 }
