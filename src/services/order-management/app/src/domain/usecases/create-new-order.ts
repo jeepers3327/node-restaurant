@@ -9,6 +9,13 @@ import { OrderCreatedEvent } from "../events/order-created/order-created";
 
 export interface CreateNewOrderUseCase {
   customerId: string;
+  items: NewOrderItem[];
+}
+
+export interface NewOrderItem {
+  description: string;
+  quantity: number;
+  price: number;
 }
 
 export class CreateOrderCommandHandler {

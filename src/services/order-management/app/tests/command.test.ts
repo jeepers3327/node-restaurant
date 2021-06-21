@@ -22,6 +22,11 @@ describe("Create order command tests", () => {
   it("Should be able to execute a create order command", async () => {
     const newOrderNumber = await handler.execute({
       customerId: customerId,
+      items: [{
+        description: '1234',
+        quantity: 1,
+        price: 150
+      }]
     });
 
     expect(newOrderNumber.length).to.greaterThan(0);
