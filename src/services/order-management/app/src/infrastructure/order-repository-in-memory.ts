@@ -1,6 +1,6 @@
 import { readdir } from "fs";
-import { IOrder } from "../../src/domain/entities/order";
-import { Orders } from "../../src/domain/entities/order-repository";
+import { IOrder } from "../domain/entities/order";
+import { Orders } from "../domain/entities/order-repository";
 export class OrderRepositoryInMemoryImpl implements Orders {
   orders: IOrder[] = [];
 

@@ -1,7 +1,6 @@
 import { Aggregate, IAggregate } from "node-js-ddd/dist/model/aggregate";
-import { DomainEvents } from "node-js-ddd/dist/events/domain-event-handling";
 import { Amount } from "./amount";
-import { IOrderDetails, OrderDetailFactory } from "./order-details";
+import { IOrderDetails, OrderDetailFactory } from './order-details';
 import { OrderCreatedEvent } from "../events/order-created/order-created";
 import { OrderCancelledEvent } from "../events/order-cancelled/order-cancelled";
 
@@ -10,11 +9,12 @@ export interface IOrder extends IAggregate {
   readonly customerId: string;
   readonly orderDate: Date;
   readonly totalAmount: Amount;
-  readonly details: IOrderDetails;
+  readonly details: IOrderDetails; 
   readonly status: string;
 
   dispatch(): void;
   cancel(): void;
+  asJson(): string;
 }
 
 export class OrderFactory {
@@ -40,20 +40,13 @@ export class OrderFactory {
     return order;
   }
 
-  static CreateFromJson(json: string): IOrder {
-    if (json.length === 0) {
-      throw Error("JSON cannot be empty");
-    }
+  static CreateFromObject(object: any): IOrder
+  {
+    const order = Order.Create(object['_customerId']);
 
-    const jsonObj = JSON.parse(json);
-
-    const order = new Order(
-      jsonObj["_customerId"],
-      jsonObj["_orderNumber"],
-      jsonObj["_orderDate"]
-    );
-    order._orderState = jsonObj["_orderState"];
-    order._details = jsonObj["_details"];
+    order._orderNumber = object['_orderNumber'];
+    order._orderState = object['_orderState'];
+    order._details = OrderDetailFactory.CreateFromObject(object['_details']);
 
     return order;
   }
@@ -152,6 +145,11 @@ class Order extends Aggregate implements IOrder {
         customerId: this.customerId,
       })
     );
+  }
+
+  asJson(): string {
+    this.clearDomainEvents();
+    return JSON.stringify(this);
   }
 
   private static generateNewOrderNumber() {

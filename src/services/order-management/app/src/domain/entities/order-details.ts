@@ -1,12 +1,13 @@
 import { Amount } from "./amount";
 import { IOrderDelivery, DeliveryChargeFactory } from "./order-delivery";
-import { IOrderItem, OrderItemFactory } from "./order-item";
+import { IOrderItem, OrderItemFactory } from './order-item';
 import { IValueObject } from "node-js-ddd/dist/model/value-object";
 
 export interface IOrderDetails extends IValueObject {
   readonly orderItems: IOrderItem[];
   readonly orderAmount: Amount;
   readonly dispatchDate?: Date;
+  readonly delivery: IOrderDelivery;
 
   addOrderItem(
     description: string,
@@ -21,12 +22,25 @@ export class OrderDetailFactory {
   static Create(): IOrderDetails {
     return new OrderDetails();
   }
+
+  static CreateFromObject(object: any): IOrderDetails
+  {
+    const details = new OrderDetails();
+
+    for (let index = 0; index < object['_orderItems'].length; index++) {
+      details.addOrderItem(object['_orderItems'][index]['_description'], object['_orderItems'][index]['_value']['_amount'], object['_orderItems'][index]['_quantity']);      
+    }
+
+    details._dispatchDate = object['_dispatchDate'];
+
+    return details;
+  }
 }
 
 class OrderDetails implements IOrderDetails {
-  private _orderItems: IOrderItem[];
+  _orderItems: IOrderItem[];
   private _delivery: IOrderDelivery;
-  private _dispatchDate?: Date;
+  _dispatchDate?: Date;
 
   constructor() {
     this._orderItems = [];
@@ -55,6 +69,10 @@ class OrderDetails implements IOrderDetails {
     });
 
     return new Amount(total + this._delivery.deliveryCharge.amount, "GBP");
+  }
+
+  get delivery(): IOrderDelivery {
+    return this._delivery;
   }
 
   addOrderItem(

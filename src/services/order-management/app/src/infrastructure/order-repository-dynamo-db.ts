@@ -1,5 +1,5 @@
 import { DynamoDB } from "aws-sdk";
-import { PutItemInput } from "aws-sdk/clients/dynamodb";
+import { PutItemInput, Converter } from "aws-sdk/clients/dynamodb";
 import { Orders } from "../domain/entities/order-repository";
 import { IOrder, OrderFactory } from "../domain/entities/order";
 
@@ -19,11 +19,7 @@ export class OrderRepositoryDynamoDb implements Orders {
   async addNew(order: IOrder): Promise<void> {
     const params: PutItemInput = {
       TableName: this.table,
-      Item: {
-        ...this.keys(order.customerId, order.orderNumber),
-        Type: { S: "Order" },
-        Data: { S: JSON.stringify(order) },
-      },
+      Item: this.asAttributeMap(order),
     };
 
     console.log(
@@ -49,21 +45,17 @@ export class OrderRepositoryDynamoDb implements Orders {
       })
       .promise();
 
-    if (resp.Item == undefined || resp.Item.Data) {
+    if (resp.Item == undefined || resp.Item.Data == undefined) {
       throw new Error(`Order ${orderNumber} not found`);
     } else {
-      return this.orderFromItem(resp.Item);
+      return this.orderFromItem(Converter.unmarshall(resp.Item));
     }
   }
 
   async update(order: IOrder): Promise<void> {
     const params: PutItemInput = {
       TableName: this.table,
-      Item: {
-        ...this.keys(order.customerId, order.orderNumber),
-        Type: { S: "Order" },
-        Data: { S: JSON.stringify(order) },
-      },
+      Item: this.asAttributeMap(order),
     };
 
     console.log(
@@ -82,7 +74,15 @@ export class OrderRepositoryDynamoDb implements Orders {
     };
   }
 
+  asAttributeMap(order: IOrder) {
+    return {
+      ...this.keys(order.customerId, order.orderNumber),
+      Type: { S: "Order" },
+      Data: Converter.marshall(order),
+    };
+  }
+
   orderFromItem(attributes: any) {
-    return OrderFactory.CreateFromJson(attributes.Data.S);
+    return OrderFactory.CreateFromObject(attributes);
   }
 }
