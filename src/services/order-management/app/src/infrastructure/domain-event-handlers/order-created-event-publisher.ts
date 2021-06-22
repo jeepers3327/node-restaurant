@@ -5,5 +5,7 @@ export class OrderCreatedEventPublisher implements IHandler<OrderCreatedEvent>{
     typeToHandle = 'order-created';
     handle(evt: OrderCreatedEvent): void {
         console.log(`Event handling running for ${evt}`);
+
+        //TODO: Add event bridge event publishing
     }
 }
