@@ -25,7 +25,7 @@ export const handler = async (
       event.pathParameters["orderNumber"]
     );
 
-    return new ApiResponse<IOrder>(true, "OK", order).respond();
+    return new ApiResponse<string>(true, "OK", order.asJson()).respond();
   } catch (error) {
     logger.logError(
       `Failure retrieving order ${event.pathParameters["customerId"]} for ${event.pathParameters["orderNumber"]}`,
