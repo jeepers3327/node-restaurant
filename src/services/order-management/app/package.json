@@ -30,7 +30,7 @@
   },
   "dependencies": {
     "aws-sdk": "^2.929.0",
-    "node-js-ddd": "^1.0.8",
+    "node-js-ddd": "^1.0.9",
     "uuid": "^8.3.2",
     "winston": "^3.3.3"
   }
