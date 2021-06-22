@@ -45,10 +45,12 @@ export class OrderRepositoryDynamoDb implements Orders {
       })
       .promise();
 
-    if (resp.Item == undefined || resp.Item.Data == undefined) {
+    console.log(resp.Item);
+
+    if (resp.Item == undefined) {
       throw new Error(`Order ${orderNumber} not found`);
     } else {
-      return this.orderFromItem(Converter.unmarshall(resp.Item));
+      return this.orderFromItem(Converter.unmarshall(resp.Item['Data'].M));
     }
   }
 
@@ -78,7 +80,7 @@ export class OrderRepositoryDynamoDb implements Orders {
     return {
       ...this.keys(order.customerId, order.orderNumber),
       Type: { S: "Order" },
-      Data: Converter.marshall(order),
+      Data: { M: Converter.marshall(order) },
     };
   }
 
