@@ -1,22 +1,20 @@
 import "mocha";
 import { assert, expect } from "chai";
-import { OrderFactory } from '../src/domain/entities/order';
-import { DomainEvents } from "node-js-ddd/dist/events/domain-event-handling";
+import { OrderFactory } from "../src/domain/entities/order";
 import { PutItemInput, Converter } from "aws-sdk/clients/dynamodb";
+import { DomainEvents } from 'node-js-ddd/dist/events/domain-event-handling';
 
 const customerId = "consulting@jameseastham.co.uk";
 
 describe("Order model", () => {
   beforeEach(function () {
-    DomainEvents.registerCallbackHandler((type, eventRaised) => {
-    });
+    DomainEvents.registerCallbackHandler((type, eventRaised) => {});
   });
 
   it("Should be able to create an order", () => {
     const order = OrderFactory.Create(customerId);
 
     expect(order.customerId).to.equal(customerId);
-    expect(order.id.length).to.greaterThan(0);
     expect(order.orderNumber.length).to.greaterThan(0);
   });
 
@@ -82,7 +80,6 @@ describe("Order model", () => {
     expect(order.customerId).to.equal(customerId);
     expect(order.orderNumber).to.equal("1234");
   });
-
 
   it("Should be able to add an order item", () => {
     const order = OrderFactory.Create(customerId);
@@ -208,14 +205,22 @@ describe("Order model", () => {
 
     const unmarshalled = Converter.unmarshall(marshalled);
 
-    const unmarshalledOrder = OrderFactory.CreateFromObject(unmarshalled)
+    const unmarshalledOrder = OrderFactory.CreateFromObject(unmarshalled);
 
     expect(unmarshalledOrder.customerId).to.equal(order.customerId);
     expect(unmarshalledOrder.orderNumber).to.equal(order.orderNumber);
-    expect(unmarshalledOrder.orderDate.toDateString()).to.equal(order.orderDate.toDateString());
+    expect(unmarshalledOrder.orderDate.toDateString()).to.equal(
+      order.orderDate.toDateString()
+    );
     expect(unmarshalledOrder.status).to.equal(order.status);
-    expect(unmarshalledOrder.details.orderItems.length).to.equal(order.details.orderItems.length);
-    expect(unmarshalledOrder.totalAmount.amount).to.equal(order.totalAmount.amount);
-    expect(unmarshalledOrder.details.delivery.deliveryCharge.amount).to.equal(order.details.delivery.deliveryCharge.amount);
+    expect(unmarshalledOrder.details.orderItems.length).to.equal(
+      order.details.orderItems.length
+    );
+    expect(unmarshalledOrder.totalAmount.amount).to.equal(
+      order.totalAmount.amount
+    );
+    expect(unmarshalledOrder.details.delivery.deliveryCharge.amount).to.equal(
+      order.details.delivery.deliveryCharge.amount
+    );
   });
 });
