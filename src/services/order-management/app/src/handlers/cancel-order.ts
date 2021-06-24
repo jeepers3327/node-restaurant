@@ -4,6 +4,7 @@ import { ApiGatewayResponse } from "../common/apigateway/apigateway-response";
 import { CancelOrderCommandHandler } from "../domain/usecases/cancel-order";
 import { WinstonLogger } from "../infrastructure/logger-winston";
 import { OrderRepositoryDynamoDb } from "../infrastructure/order-repository-dynamo-db";
+import { OrderRepositoryFaunaDbImpl } from '../infrastructure/order-repository-fauna-db';
 
 export const handler = async (
   event: ApiGatewayEvent
@@ -17,7 +18,7 @@ export const handler = async (
   }
 
   const createOrderHandler = new CancelOrderCommandHandler(
-    new OrderRepositoryDynamoDb(),
+    new OrderRepositoryFaunaDbImpl(process.env.FAUNA_DB_ACCESS_KEY),
     new WinstonLogger()
   );
 

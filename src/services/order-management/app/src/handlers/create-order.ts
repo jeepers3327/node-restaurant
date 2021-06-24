@@ -6,6 +6,7 @@ import { CreateOrderCommandHandler } from "../domain/usecases/create-new-order";
 import { WinstonLogger } from "../infrastructure/logger-winston";
 import { OrderRepositoryDynamoDb } from "../infrastructure/order-repository-dynamo-db";
 import { OrderCreatedEventPublisher } from '../infrastructure/domain-event-handlers/order-created-event-publisher';
+import { OrderRepositoryFaunaDbImpl } from '../infrastructure/order-repository-fauna-db';
 
 export const handler = async (
   event: ApiGatewayEvent
@@ -20,7 +21,7 @@ export const handler = async (
   DomainEvents.registerHandler(new OrderCreatedEventPublisher());
 
   const createOrderHandler = new CreateOrderCommandHandler(
-    new OrderRepositoryDynamoDb(),
+    new OrderRepositoryFaunaDbImpl(process.env.FAUNA_DB_ACCESS_KEY),
     new WinstonLogger()
   );
 

@@ -9,7 +9,7 @@
     "compile": "eslint . --ext .ts && tsc",
     "lint": "eslint . --ext .ts",
     "test": "eslint . --ext .ts && tsc && mocha",
-    "fast-test": "mocha"
+    "fast-test": "mocha -g 'Infrastructure'"
   },
   "author": "James Eastham",
   "license": "MIT",

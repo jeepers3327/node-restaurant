@@ -42,11 +42,8 @@ export class OrderFactory {
 
   static CreateFromObject(object: any): IOrder
   {
-    const order = Order.Create(object['_customerId']);
-
-    order._orderNumber = object['_orderNumber'];
-    order._orderState = object['_orderState'];
-    order._details = OrderDetailFactory.CreateFromObject(object['_details']);
+    const order = new Order(object['_customerId'], object['_orderNumber'], object['_orderDate'], object['_id']);
+    // order._details = OrderDetailFactory.CreateFromObject(object['_details']);
 
     return order;
   }
@@ -60,8 +57,8 @@ class Order extends Aggregate implements IOrder {
   _orderNumber: string;
   _orderState: string;
 
-  constructor(customerId: string, orderNumber: string, orderDate: Date) {
-    super(orderNumber);
+  constructor(customerId: string, orderNumber: string, orderDate: Date, id: string = '') {
+    super(id);
 
     this._customerId = customerId;
     this._orderNumber = orderNumber;

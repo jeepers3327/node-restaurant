@@ -12,6 +12,18 @@ export class OrderRepositoryInMemoryImpl implements Orders {
     });
   }
 
+  async delete(orderNumber: string): Promise<void> {
+    const existingOrder = await this.getSpecific(orderNumber);
+
+    const index = this.orders.indexOf(existingOrder);
+
+    this.orders.splice(index, 1);
+
+    return new Promise((resolve, reject) => {
+      resolve();
+    });
+  }
+
   getSpecific(orderNumber: string): Promise<IOrder> {
     const order = this.orders.filter((p) => p.orderNumber == orderNumber);
 

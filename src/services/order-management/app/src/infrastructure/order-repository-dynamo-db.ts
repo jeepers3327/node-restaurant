@@ -15,6 +15,9 @@ export class OrderRepositoryDynamoDb implements Orders {
       this.table = process.env.TABLE_NAME;
     }
   }
+  delete(orderNumber: string): Promise<void> {
+    throw new Error("Method not implemented.");
+  }
 
   async addNew(order: IOrder): Promise<void> {
     const params: PutItemInput = {

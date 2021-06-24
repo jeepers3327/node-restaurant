@@ -36,6 +36,5 @@ describe("Create order command tests", () => {
 class MockHandler implements IHandler<OrderCreatedEvent> {
   typeToHandle = "order-created";
   handle(evt: OrderCreatedEvent): void {
-    console.log(evt);
   }
 }

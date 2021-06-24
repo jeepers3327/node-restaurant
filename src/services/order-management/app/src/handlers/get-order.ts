@@ -3,7 +3,7 @@ import { ApiGatewayEvent } from "../common/apigateway/apigateway-event";
 import { ApiGatewayResponse } from "../common/apigateway/apigateway-response";
 import { IOrder } from "../domain/entities/order";
 import { WinstonLogger } from "../infrastructure/logger-winston";
-import { OrderRepositoryDynamoDb } from "../infrastructure/order-repository-dynamo-db";
+import { OrderRepositoryFaunaDbImpl } from '../infrastructure/order-repository-fauna-db';
 
 export const handler = async (
   event: ApiGatewayEvent
@@ -17,7 +17,7 @@ export const handler = async (
   }
 
   const logger = new WinstonLogger();
-  const orders = new OrderRepositoryDynamoDb();
+  const orders = new OrderRepositoryFaunaDbImpl(process.env.FAUNA_DB_ACCESS_KEY);
 
   try {
     const order = await orders.getSpecific(
