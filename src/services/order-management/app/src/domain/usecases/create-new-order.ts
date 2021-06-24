@@ -6,10 +6,12 @@ import {
   IHandler,
 } from "node-js-ddd/dist/events/domain-event-handling";
 import { OrderCreatedEvent } from "../events/order-created/order-created";
+import { IAddress } from '../entities/address';
 
 export interface CreateNewOrderUseCase {
   customerId: string;
   items: NewOrderItem[];
+  address: IAddress
 }
 
 export interface NewOrderItem {
@@ -30,7 +32,11 @@ export class CreateOrderCommandHandler {
   async execute(request: CreateNewOrderUseCase): Promise<string> {
     this._logger.logInformation(`Creating new order for ${request.customerId}`);
 
-    const order = OrderFactory.Create(request.customerId);
+    const order = OrderFactory.Create(request.customerId, request.address);
+
+    request.items.forEach(item => {
+      order.details.addOrderItem(item.description, item.price, item.quantity);
+    })
 
     await this._orderRepo.addNew(order);
 

@@ -9,25 +9,23 @@ export const handler = async (
 ): Promise<ApiGatewayResponse> => {
   if (
     event.pathParameters === undefined ||
-    event.pathParameters["customerId"] === undefined ||
-    event.pathParameters["orderNumber"] === undefined
+    event.pathParameters["customerId"] === undefined
   ) {
-    throw new Error("A valid customer id and order number must be provided");
+    throw new Error("A valid customer id must be provided");
   }
 
   const logger = new WinstonLogger();
   const orders = new OrderRepositoryFaunaDbImpl(process.env.FAUNA_DB_ACCESS_KEY);
 
   try {
-    const order = await orders.getSpecific(
-      event.pathParameters["customerId"],
-      event.pathParameters["orderNumber"]
+    const order = await orders.getForCustomer(
+      event.pathParameters["customerId"]
     );
 
-    return new ApiResponse<any>(true, "OK", order.asJson()).respond();
+    return new ApiResponse<any>(true, "OK", order).respond();
   } catch (error) {
     logger.logError(
-      `Failure retrieving order ${event.pathParameters["customerId"]} for ${event.pathParameters["orderNumber"]}`,
+      `Failure retrieving orders for ${event.pathParameters["customerId"]}`,
       error
     );
 

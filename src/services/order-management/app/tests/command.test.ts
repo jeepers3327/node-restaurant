@@ -8,8 +8,15 @@ import {
   IHandler,
 } from "node-js-ddd/dist/events/domain-event-handling";
 import { OrderCreatedEvent } from "../src/domain/events/order-created/order-created";
+import { IAddress } from '../src/domain/entities/address';
 
 const customerId = "consulting@jameseastham.co.uk";
+const address: IAddress = {
+  addressLine1: 'Test address',
+  country: 'GB',
+  postcode: 'BB4456'
+}
+
 const handler = new CreateOrderCommandHandler(
   new OrderRepositoryInMemoryImpl(),
   new WinstonLogger()
@@ -26,7 +33,8 @@ describe("Create order command tests", () => {
         description: '1234',
         quantity: 1,
         price: 150
-      }]
+      }],
+      address: address
     });
 
     expect(newOrderNumber.length).to.greaterThan(0);

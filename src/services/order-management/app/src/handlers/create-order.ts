@@ -25,9 +25,12 @@ export const handler = async (
     new WinstonLogger()
   );
 
+  const requestBody = JSON.parse(event.body);
+
   const createdOrderNumber = await createOrderHandler.execute({
     customerId: event.pathParameters["customerId"],
-    items: []
+    items: requestBody.orderItems,
+    address: requestBody.deliveryAddress
   });
 
   return new ApiResponse<string>(true, 'OK', createdOrderNumber).respond();

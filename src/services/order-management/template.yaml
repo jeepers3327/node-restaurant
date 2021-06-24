@@ -31,6 +31,31 @@ Resources:
           Properties:
             Path: /{customerId}/{orderNumber}
             Method: GET
+  getCustomerOrdersFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: makefile
+    Properties:
+      CodeUri: app/
+      Handler: dist/src/handlers/get-customer-orders.handler
+      Runtime: nodejs12.x
+      MemorySize: 128
+      Timeout: 100
+      Description: Get all orders for a customer
+      Policies:
+        # Give Create/Read/Update/Delete Permissions to the SampleTable
+        - DynamoDBReadPolicy:
+            TableName: !Ref OrderManagementTable
+      Environment:
+        Variables:
+          # Make table name accessible as environment variable from function code during execution
+          TABLE_NAME: !Ref OrderManagementTable
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /{customerId}/orders/list
+            Method: GET
 
   createOrderFunction:
     Type: AWS::Serverless::Function

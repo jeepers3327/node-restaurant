@@ -35,6 +35,10 @@ export class OrderRepositoryInMemoryImpl implements Orders {
       resolve(order[0]);
     });
   }
+  
+  getForCustomer(customerId: string): Promise<IOrder[]> {
+    throw new Error("Method not implemented.");
+  }
 
   update(order: IOrder): Promise<void> {
     const existingOrder = this.getSpecific(order.orderNumber);

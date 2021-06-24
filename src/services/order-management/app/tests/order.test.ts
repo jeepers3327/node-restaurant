@@ -3,8 +3,14 @@ import { assert, expect } from "chai";
 import { OrderFactory } from "../src/domain/entities/order";
 import { PutItemInput, Converter } from "aws-sdk/clients/dynamodb";
 import { DomainEvents } from 'node-js-ddd/dist/events/domain-event-handling';
+import { IAddress } from '../src/domain/entities/address';
 
 const customerId = "consulting@jameseastham.co.uk";
+const address: IAddress = {
+  addressLine1: 'Test address',
+  country: 'GB',
+  postcode: 'BB4456'
+}
 
 describe("Order model", () => {
   beforeEach(function () {
@@ -12,14 +18,14 @@ describe("Order model", () => {
   });
 
   it("Should be able to create an order", () => {
-    const order = OrderFactory.Create(customerId);
+    const order = OrderFactory.Create(customerId, address);
 
     expect(order.customerId).to.equal(customerId);
     expect(order.orderNumber.length).to.greaterThan(0);
   });
 
   it("Should be able to create an order and dispatch", () => {
-    const order = OrderFactory.Create(customerId);
+    const order = OrderFactory.Create(customerId, address);
     order.dispatch();
 
     expect(order.status).to.equal("Dispatched");
@@ -27,14 +33,14 @@ describe("Order model", () => {
   });
 
   it("Should be able to create an order and cancel", () => {
-    const order = OrderFactory.Create(customerId);
+    const order = OrderFactory.Create(customerId, address);
     order.cancel();
 
     expect(order.status).to.equal("Cancelled");
   });
 
   it("Should not be able to dispatch a cancelled order", () => {
-    const order = OrderFactory.Create(customerId);
+    const order = OrderFactory.Create(customerId, address);
     order.cancel();
 
     assert.throws(
@@ -45,7 +51,7 @@ describe("Order model", () => {
   });
 
   it("Should not be able to dispatch a dispatched order", () => {
-    const order = OrderFactory.Create(customerId);
+    const order = OrderFactory.Create(customerId, address);
     order.dispatch();
 
     assert.throws(
@@ -56,7 +62,7 @@ describe("Order model", () => {
   });
 
   it("Should not be able to cancel a dispatched order", () => {
-    const order = OrderFactory.Create(customerId);
+    const order = OrderFactory.Create(customerId, address);
     order.dispatch();
 
     assert.throws(
@@ -68,21 +74,21 @@ describe("Order model", () => {
 
   it("Should not be able to create an order with an empty customer id", () => {
     assert.throws(
-      () => OrderFactory.Create(""),
+      () => OrderFactory.Create("", address),
       Error,
       "Customer id cannot be empty"
     );
   });
 
   it("Should be able to create an order from existing order number", () => {
-    const order = OrderFactory.Create(customerId, "1234", new Date());
+    const order = OrderFactory.Create(customerId, address, "1234", new Date());
 
     expect(order.customerId).to.equal(customerId);
     expect(order.orderNumber).to.equal("1234");
   });
 
   it("Should be able to add an order item", () => {
-    const order = OrderFactory.Create(customerId);
+    const order = OrderFactory.Create(customerId, address);
 
     order.details.addOrderItem("Pizza", 10, 1);
     order.details.addOrderItem("Pizza", 10, 1);
@@ -96,7 +102,7 @@ describe("Order model", () => {
   });
 
   it("Should be able to remove one of many order items", () => {
-    const order = OrderFactory.Create(customerId);
+    const order = OrderFactory.Create(customerId, address);
 
     order.details.addOrderItem("Pizza", 10, 1);
     order.details.addOrderItem("Pizza", 10, 1);
@@ -111,7 +117,7 @@ describe("Order model", () => {
   });
 
   it("Should be able to remove all of many order items", () => {
-    const order = OrderFactory.Create(customerId);
+    const order = OrderFactory.Create(customerId, address);
 
     order.details.addOrderItem("Pizza", 10, 1);
     order.details.addOrderItem("Pizza", 10, 1);
@@ -126,7 +132,7 @@ describe("Order model", () => {
   });
 
   it("Should be able to remove a second order item", () => {
-    const order = OrderFactory.Create(customerId);
+    const order = OrderFactory.Create(customerId, address);
 
     order.details.addOrderItem("Pizza", 10, 1);
     order.details.addOrderItem("Pizza", 10, 1);
@@ -142,7 +148,7 @@ describe("Order model", () => {
   });
 
   it("Should be able to remove non-existing order item without error", () => {
-    const order = OrderFactory.Create(customerId);
+    const order = OrderFactory.Create(customerId, address);
 
     order.details.addOrderItem("Pizza", 10, 1);
     order.details.addOrderItem("Pizza", 10, 1);
@@ -158,7 +164,7 @@ describe("Order model", () => {
   });
 
   it("Should switch to free delivery over 50", () => {
-    const order = OrderFactory.Create(customerId);
+    const order = OrderFactory.Create(customerId, address);
 
     order.details.addOrderItem("Pizza", 10, 1);
     order.details.addOrderItem("Pizza", 10, 1);
@@ -173,7 +179,7 @@ describe("Order model", () => {
   });
 
   it("Should remove free delivery when item under 50", () => {
-    const order = OrderFactory.Create(customerId);
+    const order = OrderFactory.Create(customerId, address);
 
     order.details.addOrderItem("Pizza", 10, 1);
     order.details.addOrderItem("Pizza", 10, 1);
@@ -192,7 +198,7 @@ describe("Order model", () => {
   });
 
   it("Should allow marshall and unmarshall", () => {
-    const order = OrderFactory.Create(customerId);
+    const order = OrderFactory.Create(customerId, address);
 
     order.details.addOrderItem("Pizza", 10, 1);
     order.details.addOrderItem("Pizza", 10, 1);

@@ -15,6 +15,9 @@ export class OrderRepositoryDynamoDb implements Orders {
       this.table = process.env.TABLE_NAME;
     }
   }
+  getForCustomer(customerId: string): Promise<IOrder[]> {
+    throw new Error("Method not implemented.");
+  }
   delete(orderNumber: string): Promise<void> {
     throw new Error("Method not implemented.");
   }

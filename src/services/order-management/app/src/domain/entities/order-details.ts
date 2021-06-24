@@ -2,6 +2,7 @@ import { Amount } from "./amount";
 import { IOrderDelivery, DeliveryChargeFactory } from "./order-delivery";
 import { IOrderItem, OrderItemFactory } from './order-item';
 import { IValueObject } from "node-js-ddd/dist/model/value-object";
+import { IAddress } from './address';
 
 export interface IOrderDetails extends IValueObject {
   readonly orderItems: IOrderItem[];
@@ -19,13 +20,13 @@ export interface IOrderDetails extends IValueObject {
 }
 
 export class OrderDetailFactory {
-  static Create(): IOrderDetails {
-    return new OrderDetails();
+  static Create(deliveryAddress: IAddress): IOrderDetails {
+    return new OrderDetails(deliveryAddress);
   }
 
   static CreateFromObject(object: any): IOrderDetails
   {
-    const details = new OrderDetails();
+    const details = new OrderDetails(object['_delivery']['_address']);
 
     for (let index = 0; index < object['_orderItems'].length; index++) {
       details.addOrderItem(object['_orderItems'][index]['_description'], object['_orderItems'][index]['_value']['_amount'], object['_orderItems'][index]['_quantity']);      
@@ -41,14 +42,16 @@ class OrderDetails implements IOrderDetails {
   _orderItems: IOrderItem[];
   private _delivery: IOrderDelivery;
   _dispatchDate?: Date;
+  _deliveryAddress: IAddress;
 
-  constructor() {
+  constructor(deliveryAddress: IAddress) {
     this._orderItems = [];
-    this._delivery = DeliveryChargeFactory.CalculateDeliveryCharge(-1);
+    this._deliveryAddress = deliveryAddress;
+    this._delivery = DeliveryChargeFactory.CalculateDeliveryCharge(deliveryAddress, -1);
   }
 
-  static Create(): OrderDetails {
-    const details = new OrderDetails();
+  static Create(deliveryAddress: IAddress): OrderDetails {
+    const details = new OrderDetails(deliveryAddress);
 
     return details;
   }
@@ -125,6 +128,7 @@ class OrderDetails implements IOrderDetails {
 
   private recalculateDelivery() {
     this._delivery = DeliveryChargeFactory.CalculateDeliveryCharge(
+      this._deliveryAddress,
       this.orderAmount.amount
     );
   }

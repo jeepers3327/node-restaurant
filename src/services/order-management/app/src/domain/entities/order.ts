@@ -1,25 +1,27 @@
 import { Aggregate, IAggregate } from "node-js-ddd/dist/model/aggregate";
 import { Amount } from "./amount";
-import { IOrderDetails, OrderDetailFactory } from './order-details';
+import { IOrderDetails, OrderDetailFactory } from "./order-details";
 import { OrderCreatedEvent } from "../events/order-created/order-created";
 import { OrderCancelledEvent } from "../events/order-cancelled/order-cancelled";
+import { IAddress } from "./address";
 
 export interface IOrder extends IAggregate {
   readonly orderNumber: string;
   readonly customerId: string;
   readonly orderDate: Date;
   readonly totalAmount: Amount;
-  readonly details: IOrderDetails; 
+  readonly details: IOrderDetails;
   readonly status: string;
 
   dispatch(): void;
   cancel(): void;
-  asJson(): string;
+  asJson(): any;
 }
 
 export class OrderFactory {
   static Create(
     customerId: string,
+    deliveryAddress: IAddress,
     orderNumber?: string,
     orderDate?: Date
   ): IOrder {
@@ -27,7 +29,7 @@ export class OrderFactory {
       throw Error("Customer id cannot be empty");
     }
 
-    const order = Order.Create(customerId);
+    const order = Order.Create(customerId, deliveryAddress);
 
     if (orderNumber != null && orderNumber != undefined) {
       order._orderNumber = orderNumber;
@@ -40,10 +42,16 @@ export class OrderFactory {
     return order;
   }
 
-  static CreateFromObject(object: any): IOrder
-  {
-    const order = new Order(object['_customerId'], object['_orderNumber'], object['_orderDate'], object['_id']);
-    // order._details = OrderDetailFactory.CreateFromObject(object['_details']);
+  static CreateFromObject(object: any): IOrder {
+    const order = new Order(
+      object["_customerId"],
+      object["_orderNumber"],
+      object["_orderDate"],
+      object["_details"]["_delivery"]["_address"],
+      object["_id"]
+    );
+    order._details = OrderDetailFactory.CreateFromObject(object["_details"]);
+    order._orderState = object["_orderState"];
 
     return order;
   }
@@ -57,21 +65,28 @@ class Order extends Aggregate implements IOrder {
   _orderNumber: string;
   _orderState: string;
 
-  constructor(customerId: string, orderNumber: string, orderDate: Date, id: string = '') {
+  constructor(
+    customerId: string,
+    orderNumber: string,
+    orderDate: Date,
+    deliveryAddress: IAddress,
+    id: string = ""
+  ) {
     super(id);
-
+    
     this._customerId = customerId;
     this._orderNumber = orderNumber;
     this._orderDate = orderDate;
-    this._details = OrderDetailFactory.Create();
+    this._details = OrderDetailFactory.Create(deliveryAddress);
     this._orderState = "New";
   }
 
-  static Create(customerId: string): Order {
+  static Create(customerId: string, deliveryAddress: IAddress): Order {
     const order = new Order(
       customerId,
       Order.generateNewOrderNumber(),
-      new Date()
+      new Date(),
+      deliveryAddress
     );
 
     order.addDomainEvent(
@@ -144,9 +159,9 @@ class Order extends Aggregate implements IOrder {
     );
   }
 
-  asJson(): string {
+  asJson(): any {
     this.clearDomainEvents();
-    return JSON.stringify(this);
+    return this;
   }
 
   private static generateNewOrderNumber() {
