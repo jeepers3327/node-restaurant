@@ -1,57 +1,59 @@
 import "mocha";
-import { assert, expect } from "chai";
+import { expect } from "chai";
 import { IOrder, OrderFactory } from "../src/domain/entities/order";
-import { Orders } from "../src/domain/entities/order-repository";
-import { PutItemInput, Converter } from "aws-sdk/clients/dynamodb";
 import { DomainEvents } from "node-js-ddd/dist/events/domain-event-handling";
 import { OrderRepositoryFaunaDbImpl } from "../src/infrastructure/order-repository-fauna-db";
-import { doesNotMatch } from "assert";
+import { IAddress } from '../src/domain/entities/address';
 
 const customerId = "consulting@jameseastham.co.uk";
+const address: IAddress = {
+  addressLine1: 'Test address',
+  country: 'GB',
+  postcode: 'BB4456'
+}
 const _orderRepo = new OrderRepositoryFaunaDbImpl(
   ""
 );
-let testOrder: IOrder;
+let testOrderNumber = '202154HATU9';
 
 describe("Infrastructure tests", () => {
   beforeEach(async function () {
     DomainEvents.registerCallbackHandler((type, eventRaised) => {});
-
-    testOrder = OrderFactory.Create(customerId);
-
-    await _orderRepo.addNew(testOrder);
   });
 
   afterEach(async function () {
-    // await _orderRepo.delete(testOrder.orderNumber);
+    //await _orderRepo.delete(testOrder.orderNumber);
   });
 
-  it("FaunaDB query test", (done) => {
+  it("FaunaDB query test", () => {
     setTimeout(async function () {
       const order = await _orderRepo.getSpecific(
         customerId,
-        testOrder.orderNumber
+        testOrderNumber
       );
 
-      expect(order.orderNumber).to.equal(testOrder.orderNumber);
-
-      console.log(order.id);
-      done();
-    }, 500);
+      expect(order.orderNumber).to.equal(testOrderNumber);
+      expect(order.details.orderItems.length).to.equal(3);
+      expect(order.id.length).to.greaterThan(0);
+    }, 1500);
   });
 
-  it("FaunaDB update test", (done) => {
-    setTimeout(async function () {
-      const order = await _orderRepo.getSpecific(
-        customerId,
-        testOrder.orderNumber
-      );
+  it("FaunaDB update test", async () => {
+    const order = await _orderRepo.getSpecific(
+      customerId,
+      testOrderNumber
+    );
 
-      order.cancel();
+    order.cancel();
 
-      await _orderRepo.update(order);
+    await _orderRepo.update(order);
+  });
 
-      done();
-    }, 500);
+  it("FaunaDB get customer order test", async () => {
+    const orders = await _orderRepo.getForCustomer(
+      customerId
+    );
+
+    expect(orders.length).to.greaterThanOrEqual(1);
   });
 });
