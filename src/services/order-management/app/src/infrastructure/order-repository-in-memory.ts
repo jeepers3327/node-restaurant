@@ -5,9 +5,9 @@ export class OrderRepositoryInMemoryImpl implements Orders {
   orders: IOrder[] = [];
 
   addNew(order: IOrder): Promise<void> {
-    this.orders.push(order);
-
     return new Promise((resolve, reject) => {
+      this.orders.push(order);
+
       resolve();
     });
   }
@@ -25,7 +25,7 @@ export class OrderRepositoryInMemoryImpl implements Orders {
   }
 
   getSpecific(orderNumber: string): Promise<IOrder> {
-    const order = this.orders.filter((p) => p.orderNumber == orderNumber);
+    const order = this.orders.filter((p) => p.orderNumber.localeCompare(orderNumber));
 
     if (order.length === 0) {
       throw Error("Order not found");
@@ -35,7 +35,7 @@ export class OrderRepositoryInMemoryImpl implements Orders {
       resolve(order[0]);
     });
   }
-  
+
   getForCustomer(customerId: string): Promise<IOrder[]> {
     throw new Error("Method not implemented.");
   }

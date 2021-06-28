@@ -100,15 +100,6 @@ Resources:
       MemorySize: 128
       Timeout: 100
       Description: Handle an order dispatched event from the event bus.
-      Policies:
-        # Give Create/Read/Update/Delete Permissions to the SampleTable
-        - DynamoDBCrudPolicy:
-            TableName: !Ref OrderManagementTable
-      Environment:
-        Variables:
-          # Make table name accessible as environment variable from function code during execution
-          TABLE_NAME: !Ref OrderManagementTable
-      
       Events:
         Trigger:
           Type: CloudWatchEvent 

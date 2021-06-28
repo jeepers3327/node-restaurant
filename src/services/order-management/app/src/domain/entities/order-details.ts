@@ -1,8 +1,8 @@
 import { Amount } from "./amount";
 import { IOrderDelivery, DeliveryChargeFactory } from "./order-delivery";
-import { IOrderItem, OrderItemFactory } from './order-item';
+import { IOrderItem, OrderItemFactory } from "./order-item";
 import { IValueObject } from "node-js-ddd/dist/model/value-object";
-import { IAddress } from './address';
+import { IAddress } from "./address";
 
 export interface IOrderDetails extends IValueObject {
   readonly orderItems: IOrderItem[];
@@ -17,6 +17,7 @@ export interface IOrderDetails extends IValueObject {
   ): IOrderItem;
   removeOrderItem(itemToRemove: string, quantityToRemove: number): void;
   dispatchedOn(date: Date): void;
+  isValid(): boolean;
 }
 
 export class OrderDetailFactory {
@@ -24,22 +25,25 @@ export class OrderDetailFactory {
     return new OrderDetails(deliveryAddress);
   }
 
-  static CreateFromObject(object: any): IOrderDetails
-  {
-    const details = new OrderDetails(object['_delivery']['_address']);
+  static CreateFromObject(object: any): IOrderDetails {
+    const details = new OrderDetails(object["_delivery"]["_address"]);
 
-    for (let index = 0; index < object['_orderItems'].length; index++) {
-      details.addOrderItem(object['_orderItems'][index]['_description'], object['_orderItems'][index]['_value']['_amount'], object['_orderItems'][index]['_quantity']);      
+    for (let index = 0; index < object["_orderItems"].length; index++) {
+      details.addOrderItem(
+        object["_orderItems"][index]["_description"],
+        object["_orderItems"][index]["_value"]["_amount"],
+        object["_orderItems"][index]["_quantity"]
+      );
     }
 
-    details._dispatchDate = object['_dispatchDate'];
+    details._dispatchDate = object["_dispatchDate"];
 
     return details;
   }
 }
 
 class OrderDetails implements IOrderDetails {
-  _orderItems: IOrderItem[];
+  _orderItems: IOrderItem[] = [];
   private _delivery: IOrderDelivery;
   _dispatchDate?: Date;
   _deliveryAddress: IAddress;
@@ -47,7 +51,21 @@ class OrderDetails implements IOrderDetails {
   constructor(deliveryAddress: IAddress) {
     this._orderItems = [];
     this._deliveryAddress = deliveryAddress;
-    this._delivery = DeliveryChargeFactory.CalculateDeliveryCharge(deliveryAddress, -1);
+    this._delivery = DeliveryChargeFactory.CalculateDeliveryCharge(
+      deliveryAddress,
+      -1
+    );
+  }
+  isValid(): boolean {
+    if (
+      this._deliveryAddress === undefined ||
+      this._deliveryAddress === null ||
+      this._orderItems.length == 0
+    ) {
+      return false;
+    } else {
+      return true;
+    }
   }
 
   static Create(deliveryAddress: IAddress): OrderDetails {
