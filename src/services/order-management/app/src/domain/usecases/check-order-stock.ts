@@ -40,34 +40,13 @@ export class CheckOrderStockCommandHandler {
       request.orderId
     );
 
-    if (!order.details.isValid()) {
-      throw new Error("Cannot check stock for an invalid order.");
-    }
+    await order.details.checkStock(this._stockChecker);
 
-    let stockCheckMessages = [];
-    let isFullyStocked = true;
-
-    await order.details.orderItems.forEach(async (orderItem) => {
-      this._logger.logInformation(
-        `Checking stock for ${orderItem.description} with a quantity of ${orderItem.quantity}`
-      );
-
-      const stockCheckResult = await this._stockChecker.checkStock(orderItem);
-
-      this._logger.logInformation(`Result is ${stockCheckResult}`);
-
-      if (stockCheckResult != 'OK') {
-        isFullyStocked = false;
-      }
-
-      stockCheckMessages.push(stockCheckMessages);
-    });
-
-    this._logger.logInformation(`Stock check complete: ${isFullyStocked}`);
+    this._logger.logInformation(`Stock check complete: ${order.details.isFullyStocked}`);
 
     return {
-      results: stockCheckMessages,
-      fullyStocked: isFullyStocked,
+      results: order.details.orderItems.map(item => {return item.stockCheckResult}),
+      fullyStocked: order.details.isFullyStocked,
     };
   }
 }

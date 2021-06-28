@@ -3,12 +3,16 @@ import { IOrderDelivery, DeliveryChargeFactory } from "./order-delivery";
 import { IOrderItem, OrderItemFactory } from "./order-item";
 import { IValueObject } from "node-js-ddd/dist/model/value-object";
 import { IAddress } from "./address";
+import { StockChecker } from "../services/stock-check-service";
+import { PaymentProcessor } from '../services/payment-processor';
 
 export interface IOrderDetails extends IValueObject {
   readonly orderItems: IOrderItem[];
   readonly orderAmount: Amount;
   readonly dispatchDate?: Date;
   readonly delivery: IOrderDelivery;
+  readonly isFullyStocked: boolean;
+  readonly stockCheckDate?: Date;
 
   addOrderItem(
     description: string,
@@ -18,6 +22,7 @@ export interface IOrderDetails extends IValueObject {
   removeOrderItem(itemToRemove: string, quantityToRemove: number): void;
   dispatchedOn(date: Date): void;
   isValid(): boolean;
+  checkStock(stockChecker: StockChecker);
 }
 
 export class OrderDetailFactory {
@@ -47,6 +52,8 @@ class OrderDetails implements IOrderDetails {
   private _delivery: IOrderDelivery;
   _dispatchDate?: Date;
   _deliveryAddress: IAddress;
+  _isFullyStocked: boolean;
+  _stockCheckedOn?: Date;
 
   constructor(deliveryAddress: IAddress) {
     this._orderItems = [];
@@ -72,6 +79,14 @@ class OrderDetails implements IOrderDetails {
     const details = new OrderDetails(deliveryAddress);
 
     return details;
+  }
+
+  get stockCheckedOn(): Date {
+    return this._stockCheckedOn;
+  }
+
+  get isFullyStocked(): boolean {
+    return this._isFullyStocked;
   }
 
   get orderItems(): IOrderItem[] {
@@ -142,6 +157,24 @@ class OrderDetails implements IOrderDetails {
 
   dispatchedOn(date: Date) {
     this._dispatchDate = date;
+  }
+
+  async checkStock(stockChecker: StockChecker) {
+    this._isFullyStocked = true;
+
+    if (!this.isValid()) {
+      throw new Error("Cannot check stock for an invalid order.");
+    }
+
+    await this.orderItems.forEach(async (orderItem) => {
+      const stockCheckResult = await stockChecker.checkStock(orderItem);
+
+      if (stockCheckResult != "OK") {
+        this._isFullyStocked = false;
+      }
+
+      orderItem.stockCheckResult = stockCheckResult;
+    });
   }
 
   private recalculateDelivery() {

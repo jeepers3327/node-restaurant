@@ -5,6 +5,7 @@ export interface IOrderItem extends IValueObject {
   readonly description: string;
   readonly value: Amount;
   readonly quantity: number;
+  stockCheckResult: string;
   orderAnother(): void;
   removeOne(): void;
 }
@@ -26,6 +27,7 @@ class OrderItem implements IOrderItem {
   private readonly _description: string;
   private readonly _value: Amount;
   private _quantity: number;
+  stockCheckResult: string;
 
   constructor(description: string, value: number, initialQuantity: number) {
     this._description = description;
