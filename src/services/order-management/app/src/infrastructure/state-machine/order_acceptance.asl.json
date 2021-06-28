@@ -1,0 +1,36 @@
+{
+    "Comment": "A state machine that does order acceptance.",
+    "StartAt": "Check Stock",
+    "States": {
+        "Check Stock": {
+            "Type": "Task",
+            "Resource": "${StockCheckerFunctionArn}",
+            "Next": "Process Payment",
+            "Retry": [
+                {
+                    "ErrorEquals": [
+                        "States.TaskFailed"
+                    ],
+                    "IntervalSeconds": 2,
+                    "MaxAttempts": 3,
+                    "BackoffRate": 1
+                }
+            ]
+        },
+        "Process Payment": {
+            "Type": "Task",
+            "Resource": "${PaymentProcessorFunctionArn}",
+            "Retry": [
+                {
+                    "ErrorEquals": [
+                        "States.TaskFailed"
+                    ],
+                    "IntervalSeconds": 2,
+                    "MaxAttempts": 3,
+                    "BackoffRate": 1
+                }
+            ],
+            "End": true
+        }
+    }
+}

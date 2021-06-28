@@ -59,6 +59,8 @@ export class ProcessPaymentCommandHandler {
       `Payment processing complete: ${paymentResult}`
     );
 
+    await this._orderRepo.update(order);
+
     return {
       message: paymentResult,
       success: paymentResult == "OK" ? true : false,

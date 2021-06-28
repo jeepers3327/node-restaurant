@@ -44,6 +44,8 @@ export class CheckOrderStockCommandHandler {
 
     this._logger.logInformation(`Stock check complete: ${order.details.isFullyStocked}`);
 
+    await this._orderRepo.update(order);
+
     return {
       results: order.details.orderItems.map(item => {return item.stockCheckResult}),
       fullyStocked: order.details.isFullyStocked,
