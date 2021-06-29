@@ -10,4 +10,7 @@ export class InfrastructureSetup {
         DomainEvents.registerHandler(new OrderCreatedStartAcceptanceWorkflow());
         DomainEvents.registerHandler(new OrderCancelledEventPublisher());
     }
+    
+    static addAzureHandlers() {
+    }
 }

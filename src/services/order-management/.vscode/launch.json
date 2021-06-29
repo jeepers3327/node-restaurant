@@ -13,6 +13,14 @@
                 "payload": {},
                 "environmentVariables": {}
             }
+        },
+        {
+            "name": "Attach to Node Functions",
+            "type": "node",
+            "request": "attach",
+            "port": 9229,
+            "preLaunchTask": "func: host start"
         }
-    ]
+    ],
+    "version": "0.2.0"
 }

@@ -14,7 +14,7 @@ export class OrderRepositoryFaunaDbImpl implements Orders {
 
   constructor(accessKey) {
     this._client = new faunadb.Client({
-      secret: process.env.FAUNA_DB_SECRET || accessKey,
+      secret: process.env.FAUNA_DB_ACCESS_KEY || accessKey,
     });
   }
 
