@@ -4,7 +4,6 @@ import { IOrderItem, OrderItemFactory } from "./order-item";
 import { IValueObject } from "node-js-ddd/dist/model/value-object";
 import { IAddress } from "./address";
 import { StockChecker } from "../services/stock-check-service";
-import { PaymentProcessor } from '../services/payment-processor';
 
 export interface IOrderDetails extends IValueObject {
   readonly orderItems: IOrderItem[];
@@ -146,6 +145,8 @@ class OrderDetails implements IOrderDetails {
 
         return currentItem;
       }
+
+      return null;
     });
 
     if (indexToRemove > -1) {
