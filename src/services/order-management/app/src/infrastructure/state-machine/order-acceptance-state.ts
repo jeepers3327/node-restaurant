@@ -1,3 +1,5 @@
+import * as stateDef from "./order-acceptance.asl.json"; // import to force ASL definition to be included in compiled files.
+
 export class OrderAcceptanceState {
     input: Input;
     output: Output;

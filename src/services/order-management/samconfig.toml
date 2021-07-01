@@ -7,3 +7,11 @@ s3_bucket = "aws-sam-cli-managed-default-samclisourcebucket-1d1li4copzvad"
 s3_prefix = "order-management-service"
 region = "eu-west-2"
 capabilities = "CAPABILITY_IAM"
+[default]
+[default.deploy]
+[default.deploy.parameters]
+stack_name = "order-management-service"
+s3_bucket = "aws-sam-cli-managed-default-samclisourcebucket-rsvlb3wikjyg"
+s3_prefix = "order-management-service"
+region = "eu-west-2"
+capabilities = "CAPABILITY_IAM"

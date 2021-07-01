@@ -137,7 +137,7 @@ Resources:
   OrderAcceptanceStateMachine:
     Type: AWS::Serverless::StateMachine # More info about State Machine Resource: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-statemachine.html
     Properties:
-      DefinitionUri: dist/src/infrastructure/state-machine/order_acceptance.asl.json
+      DefinitionUri: dist/src/infrastructure/state-machine/order-acceptance.asl.json
       DefinitionSubstitutions:
         StockCheckerFunctionArn: !GetAtt stockChecker.Arn
         PaymentProcessorFunctionArn: !GetAtt paymentProcessor.Arn
