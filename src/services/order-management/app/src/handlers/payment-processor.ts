@@ -1,7 +1,5 @@
 import { OrderRepositoryFaunaDbImpl } from '../infrastructure/order-repository-fauna-db';
 import { OrderAcceptanceState } from '../infrastructure/state-machine/order-acceptance-state';
-import { StockServiceChecker } from '../infrastructure/stock-service-checker';
-import { CheckOrderStockCommandHandler } from '../domain/usecases/check-order-stock';
 import { WinstonLogger } from '../infrastructure/logger-winston';
 import { ProcessPaymentCommandHandler } from '../domain/usecases/process-payment';
 import { PaymentProcessingService } from '../infrastructure/payment-processing-service';

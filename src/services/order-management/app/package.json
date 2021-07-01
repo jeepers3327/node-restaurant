@@ -35,6 +35,8 @@
     "faunadb": "^4.3.0",
     "node-js-ddd": "^1.0.9",
     "uuid": "^8.3.2",
-    "winston": "^3.3.3"
+    "winston": "^3.3.3",
+    "firebase-admin": "^9.8.0",
+    "firebase-functions": "^3.14.1"
   }
 }
