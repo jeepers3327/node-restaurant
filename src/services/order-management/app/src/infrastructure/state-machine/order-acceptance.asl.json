@@ -1,7 +1,12 @@
 {
     "Comment": "A state machine that does order acceptance.",
-    "StartAt": "Check Stock",
+    "StartAt": "Start order acceptance",
     "States": {
+        "Start order acceptance": {
+            "Type": "Task",
+            "Resource": "${StartOrderAcceptanceFunctionArn}",
+            "Next": "Check Stock"
+        },
         "Check Stock": {
             "Type": "Task",
             "Resource": "${StockCheckerFunctionArn}",

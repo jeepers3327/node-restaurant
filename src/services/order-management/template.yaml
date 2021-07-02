@@ -110,6 +110,18 @@ Resources:
               detail-type:
                 - order-dispatched
             
+  startOrderAcceptance:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: makefile
+    Properties:
+      CodeUri: app/
+      Handler: dist/src/handlers/start-order-acceptance.handler
+      Runtime: nodejs12.x
+      MemorySize: 128
+      Timeout: 100
+      Description: Sets up initial state orchestration for order acceptance
+            
   stockChecker:
     Type: AWS::Serverless::Function
     Metadata:
@@ -137,11 +149,14 @@ Resources:
   OrderAcceptanceStateMachine:
     Type: AWS::Serverless::StateMachine # More info about State Machine Resource: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-statemachine.html
     Properties:
-      DefinitionUri: dist/src/infrastructure/state-machine/order-acceptance.asl.json
+      DefinitionUri: app/dist/src/infrastructure/state-machine/order-acceptance.asl.json
       DefinitionSubstitutions:
+        StartOrderAcceptanceFunctionArn: !GetAtt startOrderAcceptance.Arn
         StockCheckerFunctionArn: !GetAtt stockChecker.Arn
         PaymentProcessorFunctionArn: !GetAtt paymentProcessor.Arn
       Policies: # Find out more about SAM policy templates: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-policy-templates.html
+        - LambdaInvokePolicy:
+            FunctionName: !Ref startOrderAcceptance
         - LambdaInvokePolicy:
             FunctionName: !Ref stockChecker
         - LambdaInvokePolicy:

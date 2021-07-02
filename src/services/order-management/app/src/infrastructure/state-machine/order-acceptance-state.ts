@@ -1,3 +1,4 @@
+import { IOrder } from "../../domain/entities/order";
 import * as stateDef from "./order-acceptance.asl.json"; // import to force ASL definition to be included in compiled files.
 
 export class OrderAcceptanceState {
@@ -5,11 +6,10 @@ export class OrderAcceptanceState {
     output: Output;
     audit: Audit;
 
-    constructor(customerId: string, orderNumber: string)
+    constructor(order: IOrder)
     {
         this.input = {
-            customerId: customerId,
-            orderNumber: orderNumber
+            order: order
         }
 
         this.audit = {
@@ -21,14 +21,13 @@ export class OrderAcceptanceState {
 }
 
 export class Input {
-    orderNumber: string;
-    customerId: string;
+    order: IOrder
 }
 
 export class Output {
     stockCheckSuccess: boolean;
     paymentSuccess: boolean;
-    outputMessages: string[];
+    outputMessages: string[] = [];
 }
 
 export class Audit {
