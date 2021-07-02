@@ -1,3 +1,4 @@
+import { ConfigurationServicePlaceholders } from "aws-sdk/lib/config_service_placeholders";
 import faunadb, {
   Collection,
   Create,
@@ -103,6 +104,8 @@ export class OrderRepositoryFaunaDbImpl implements Orders {
 
   getSpecific(customerId: string, orderNumber: string): Promise<IOrder> {
     return new Promise((result, error) => {
+      console.log(`Attempting to retrieve order for ${orderNumber}`);
+
       const queryResult = this._client.paginate(
         faunadb.query.Match(faunadb.query.Index("order_search"), orderNumber)
       );
@@ -111,10 +114,16 @@ export class OrderRepositoryFaunaDbImpl implements Orders {
 
       queryResult
         .map(function (ref) {
+          console.log(`Found order with ref ${ref}`);
+
           return faunadb.query.Get(ref);
         })
         .each(function (page) {
+          console.log(`${page.length} order(s) found`);
+
           if (page.length === 1) {
+            console.log(page[0]);
+            
             orderData = {
               ...page[0].data,
               ...page[0].ref,
