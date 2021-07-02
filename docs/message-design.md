@@ -1,5 +1,7 @@
 # Messages
 
+Messages are first-class citizens in Event Driven Architectures (I've written about this at length on my [blog](https://jameseastham.co.uk/posts/designing-a-distributed-system-3gf4)). The first part of any good system design should be to identify all the messages that are flying around in the domain.
+
 ## Messages
 
 | Name | Description | Synchronous (S) or Asynchronous (A) |
