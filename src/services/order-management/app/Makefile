@@ -5,9 +5,11 @@ build-createOrderFunction:
 	npm run fast-compile
 	npm prune --production
 ifeq ($(OS),Windows_NT)
-	Xcopy /E * $(ARTIFACTS_DIR)
+	Xcopy /E /I node_modules $(ARTIFACTS_DIR)\node_modules
+	Xcopy /E /I dist\src $(ARTIFACTS_DIR)\dist\src
 else
-	cp -R * $(ARTIFACTS_DIR)
+	cp -R node_modules $(ARTIFACTS_DIR)/node_modules
+	cp -R dist $(ARTIFACTS_DIR)/dist
 endif
 
 build-getOrderFunction:
@@ -17,9 +19,11 @@ build-getOrderFunction:
 	npm run fast-compile
 	npm prune --production
 ifeq ($(OS),Windows_NT)
-	Xcopy /E * $(ARTIFACTS_DIR)
+	Xcopy /E /I node_modules $(ARTIFACTS_DIR)\node_modules
+	Xcopy /E /I dist\src $(ARTIFACTS_DIR)\dist\src
 else
-	cp -R * $(ARTIFACTS_DIR)
+	cp -R node_modules $(ARTIFACTS_DIR)/node_modules
+	cp -R dist $(ARTIFACTS_DIR)/dist
 endif
 
 build-getCustomerOrdersFunction:
@@ -29,9 +33,11 @@ build-getCustomerOrdersFunction:
 	npm run fast-compile
 	npm prune --production
 ifeq ($(OS),Windows_NT)
-	Xcopy /E * $(ARTIFACTS_DIR)
+	Xcopy /E /I node_modules $(ARTIFACTS_DIR)\node_modules
+	Xcopy /E /I dist\src $(ARTIFACTS_DIR)\dist\src
 else
-	cp -R * $(ARTIFACTS_DIR)
+	cp -R node_modules $(ARTIFACTS_DIR)/node_modules
+	cp -R dist $(ARTIFACTS_DIR)/dist
 endif
 
 build-cancelOrderFunction:
@@ -41,9 +47,11 @@ build-cancelOrderFunction:
 	npm run fast-compile
 	npm prune --production
 ifeq ($(OS),Windows_NT)
-	Xcopy /E * $(ARTIFACTS_DIR)
+	Xcopy /E /I node_modules $(ARTIFACTS_DIR)\node_modules
+	Xcopy /E /I dist\src $(ARTIFACTS_DIR)\dist\src
 else
-	cp -R * $(ARTIFACTS_DIR)
+	cp -R node_modules $(ARTIFACTS_DIR)/node_modules
+	cp -R dist $(ARTIFACTS_DIR)/dist
 endif
 
 build-orderDispatchedHandler:
@@ -53,9 +61,11 @@ build-orderDispatchedHandler:
 	npm run fast-compile
 	npm prune --production
 ifeq ($(OS),Windows_NT)
-	Xcopy /E * $(ARTIFACTS_DIR)
+	Xcopy /E /I node_modules $(ARTIFACTS_DIR)\node_modules
+	Xcopy /E /I dist\src $(ARTIFACTS_DIR)\dist\src
 else
-	cp -R * $(ARTIFACTS_DIR)
+	cp -R node_modules $(ARTIFACTS_DIR)/node_modules
+	cp -R dist $(ARTIFACTS_DIR)/dist
 endif
 
 build-stockChecker:
@@ -65,9 +75,11 @@ build-stockChecker:
 	npm run fast-compile
 	npm prune --production
 ifeq ($(OS),Windows_NT)
-	Xcopy /E * $(ARTIFACTS_DIR)
+	Xcopy /E /I node_modules $(ARTIFACTS_DIR)\node_modules
+	Xcopy /E /I dist\src $(ARTIFACTS_DIR)\dist\src
 else
-	cp -R * $(ARTIFACTS_DIR)
+	cp -R node_modules $(ARTIFACTS_DIR)/node_modules
+	cp -R dist $(ARTIFACTS_DIR)/dist
 endif
 
 build-paymentProcessor:
@@ -77,7 +89,9 @@ build-paymentProcessor:
 	npm run fast-compile
 	npm prune --production
 ifeq ($(OS),Windows_NT)
-	Xcopy /E * $(ARTIFACTS_DIR)
+	Xcopy /E /I node_modules $(ARTIFACTS_DIR)\node_modules
+	Xcopy /E /I dist\src $(ARTIFACTS_DIR)\dist\src
 else
-	cp -R * $(ARTIFACTS_DIR)
+	cp -R node_modules $(ARTIFACTS_DIR)/node_modules
+	cp -R dist $(ARTIFACTS_DIR)/dist
 endif
