@@ -59,6 +59,10 @@ export class ProcessPaymentCommandHandler {
       `Payment processing complete: ${paymentResult}`
     );
 
+    if (paymentResult === 'OK') {
+      order.details.paymentReceivedOn(new Date());
+    }
+
     await this._orderRepo.update(order);
 
     return {

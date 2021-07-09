@@ -4,6 +4,7 @@ import { IOrderDetails, OrderDetailFactory } from "./order-details";
 import { OrderCreatedEvent } from "../events/order-created/order-created";
 import { OrderCancelledEvent } from "../events/order-cancelled/order-cancelled";
 import { IAddress } from "./address";
+import { OrderAcceptedEvent } from "../events/order-accepted/order-accepted-event";
 
 export interface IOrder extends IAggregate {
   readonly orderNumber: string;
@@ -14,7 +15,8 @@ export interface IOrder extends IAggregate {
   readonly status: string;
 
   dispatch(): void;
-  cancel(): void;
+  accept(): void;
+  cancel(cancellationReason: string): void;
   asJson(): any;
 }
 
@@ -70,7 +72,7 @@ class Order extends Aggregate implements IOrder {
     orderNumber: string,
     orderDate: Date,
     deliveryAddress: IAddress,
-    id: string = ""
+    id = ''
   ) {
     super(id);
     
@@ -140,7 +142,29 @@ class Order extends Aggregate implements IOrder {
     this._details.dispatchedOn(dispatchDate);
   }
 
-  cancel() {
+  accept() {
+    if (this._orderState == "Cancelled") {
+      throw Error("Cannot dispatch a cancelled order");
+    }
+
+    if (this._orderState == "Dispatched") {
+      throw Error("Order has already been dispatched");
+    }
+
+    if (!this._details.isFullyStocked || this.details.paymentReceivedOn === undefined)
+    {
+      throw Error("Cannot accept an order that has not been paid and stock checked");
+    }
+
+    this._orderState = 'Accepted';
+
+    this.addDomainEvent(new OrderAcceptedEvent(this, {
+      orderNumber: this.orderNumber,
+      customerId: this.customerId
+    }));
+  }
+
+  cancel(cancellationReason: string) {
     if (this._orderState == "Dispatched") {
       throw Error("Cannot cancel a dispatched order");
     }
@@ -150,11 +174,13 @@ class Order extends Aggregate implements IOrder {
     }
 
     this._orderState = "Cancelled";
+    this._details.addCancellationReason(cancellationReason);
 
     this.addDomainEvent(
       new OrderCancelledEvent(this, {
         orderNumber: this.orderNumber,
         customerId: this.customerId,
+        reason: cancellationReason
       })
     );
   }

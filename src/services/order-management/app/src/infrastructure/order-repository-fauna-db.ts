@@ -1,4 +1,3 @@
-import { ConfigurationServicePlaceholders } from "aws-sdk/lib/config_service_placeholders";
 import faunadb, {
   Collection,
   Create,
@@ -28,10 +27,10 @@ export class OrderRepositoryFaunaDbImpl implements Orders {
         )
       );
 
-      let orderData: IOrder[] = [];
-      let orderQueryResult = [];
+      const orderData: IOrder[] = [];
+      const orderQueryResult = [];
 
-      let order = queryResult
+      const order = queryResult
         .map(function (ref) {
           return faunadb.query.Get(ref);
         })
@@ -73,12 +72,14 @@ export class OrderRepositoryFaunaDbImpl implements Orders {
   }
 
   async delete(orderNumber: string): Promise<void> {
-    let existingORder = await this.getSpecific("", orderNumber);
+    const existingOrder = await this.getSpecific("", orderNumber);
 
-    return new Promise(async (resolve, error) => {
-      const query = Delete(Ref(Collection("orders"), existingORder.id));
+    return new Promise((resolve, error) => {
+      const query = Delete(Ref(Collection("orders"), existingOrder.id));
 
-      this._client.query(query).then((deleteResult) => {});
+      this._client.query(query).then((deleteResult) => {
+        console.log(deleteResult);
+      });
 
       return resolve();
     });
@@ -131,7 +132,7 @@ export class OrderRepositoryFaunaDbImpl implements Orders {
           }
         })
         .then((res) => {
-          let order = OrderFactory.CreateFromObject({
+          const order = OrderFactory.CreateFromObject({
             _customerId: orderData.customerId,
             _orderState: orderData.status,
             _orderDate: orderData.orderDate,
@@ -144,6 +145,11 @@ export class OrderRepositoryFaunaDbImpl implements Orders {
                 _address: orderData.details.delivery.address,
               },
             },
+            _dispatchDate: orderData.details.dispatchDate,
+            _cancellationReason: orderData.details.cancellationReason,
+            _isFullyStocked: orderData.details.isFullyStocked,
+            _paymentDate: orderData.details.paymentDate,
+            _stockCheckedOn: orderData.details.stockCheckedOn
           });
 
           return result(order);
@@ -193,6 +199,10 @@ export class OrderRepositoryFaunaDbImpl implements Orders {
           dispatchDate: order.details.dispatchDate,
           orderAmount: order.details.orderAmount,
           orderItems: order.details.orderItems,
+          stockCheckDate: order.details.stockCheckDate,
+          cancellationReason: order.details.cancellationReason,
+          isFullyStocked: order.details.isFullyStocked,
+          paymentDate: order.details.paymentDate,
         },
       },
     };

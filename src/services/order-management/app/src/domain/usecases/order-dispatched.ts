@@ -14,7 +14,7 @@ export class OrderDispatchedHandler {
     this._logger = logger;
   }
 
-  async handle(request: OrderDispatchedUseCase) {
+  async handle(request: OrderDispatchedUseCase) : Promise<void> {
     const order = await this._orderRepo.getSpecific(
       request.customerId,
       request.orderNumber

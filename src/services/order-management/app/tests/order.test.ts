@@ -4,6 +4,8 @@ import { OrderFactory } from "../src/domain/entities/order";
 import { PutItemInput, Converter } from "aws-sdk/clients/dynamodb";
 import { DomainEvents } from 'node-js-ddd/dist/events/domain-event-handling';
 import { IAddress } from '../src/domain/entities/address';
+import { StockServiceChecker } from "../src/infrastructure/stock-service-checker";
+import { MockStockChecker } from "./mocks/mocks";
 
 const customerId = "consulting@jameseastham.co.uk";
 const address: IAddress = {
@@ -14,7 +16,7 @@ const address: IAddress = {
 
 describe("Order model", () => {
   beforeEach(function () {
-    DomainEvents.registerCallbackHandler((type, eventRaised) => {});
+    DomainEvents.registerCallbackHandler((type, eventRaised) => {console.log(type)});
   });
 
   it("Should be able to create an order", () => {
@@ -34,14 +36,15 @@ describe("Order model", () => {
 
   it("Should be able to create an order and cancel", () => {
     const order = OrderFactory.Create(customerId, address);
-    order.cancel();
+    order.cancel('Manual order cancellation');
 
     expect(order.status).to.equal("Cancelled");
+    expect(order.details.cancellationReason).to.equal('Manual order cancellation');
   });
 
   it("Should not be able to dispatch a cancelled order", () => {
     const order = OrderFactory.Create(customerId, address);
-    order.cancel();
+    order.cancel('Manual order cancellation');
 
     assert.throws(
       () => order.dispatch(),
@@ -66,10 +69,38 @@ describe("Order model", () => {
     order.dispatch();
 
     assert.throws(
-      () => order.cancel(),
+      () => order.cancel('Manual order cancellation'),
       Error,
       "Cannot cancel a dispatched order"
     );
+  });
+
+  it("Should not be able to accept an order that has not been paid or stock checked", () => {
+    const order = OrderFactory.Create(customerId, address);
+    
+
+    assert.throws(
+      () =>order.accept(),
+      Error,
+      'Cannot accept an order that has not been paid and stock checked');
+    });
+
+  it("Should not be able to create an order with an empty customer id", () => {
+    assert.throws(
+      () => OrderFactory.Create("", address),
+      Error,
+      "Customer id cannot be empty"
+    );
+  });
+
+  it("Should be able to accept an order", () => {
+    const order = OrderFactory.Create(customerId, address);
+    order.details.checkStock(new MockStockChecker(true));
+    order.details.paymentReceivedOn(new Date());
+
+    order.accept();
+
+    expect(order.status).to.equal('Accepted');
   });
 
   it("Should not be able to create an order with an empty customer id", () => {
@@ -195,38 +226,5 @@ describe("Order model", () => {
     order.details.removeOrderItem("Pizza", 2);
 
     expect(order.totalAmount.amount).to.equal(42.99);
-  });
-
-  it("Should allow marshall and unmarshall", () => {
-    const order = OrderFactory.Create(customerId, address);
-
-    order.details.addOrderItem("Pizza", 10, 1);
-    order.details.addOrderItem("Pizza", 10, 1);
-    order.details.addOrderItem("Pizza", 10, 1);
-    order.details.addOrderItem("Pizza", 10, 1);
-    order.details.addOrderItem("Pizza", 10, 1);
-    order.details.removeOrderItem("Pizza", 2);
-
-    const marshalled = Converter.marshall(order);
-
-    const unmarshalled = Converter.unmarshall(marshalled);
-
-    const unmarshalledOrder = OrderFactory.CreateFromObject(unmarshalled);
-
-    expect(unmarshalledOrder.customerId).to.equal(order.customerId);
-    expect(unmarshalledOrder.orderNumber).to.equal(order.orderNumber);
-    expect(unmarshalledOrder.orderDate.toDateString()).to.equal(
-      order.orderDate.toDateString()
-    );
-    expect(unmarshalledOrder.status).to.equal(order.status);
-    expect(unmarshalledOrder.details.orderItems.length).to.equal(
-      order.details.orderItems.length
-    );
-    expect(unmarshalledOrder.totalAmount.amount).to.equal(
-      order.totalAmount.amount
-    );
-    expect(unmarshalledOrder.details.delivery.deliveryCharge.amount).to.equal(
-      order.details.delivery.deliveryCharge.amount
-    );
   });
 });

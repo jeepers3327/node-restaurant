@@ -1,12 +1,13 @@
+import { ConfigurationServicePlaceholders } from "aws-sdk/lib/config_service_placeholders";
 import { readdir } from "fs";
 import { IOrder } from "../domain/entities/order";
 import { Orders } from "../domain/entities/order-repository";
 export class OrderRepositoryInMemoryImpl implements Orders {
-  orders: IOrder[] = [];
+  static orders: IOrder[] = [];
 
   addNew(order: IOrder): Promise<void> {
     return new Promise((resolve, reject) => {
-      this.orders.push(order);
+      OrderRepositoryInMemoryImpl.orders.push(order);
 
       resolve();
     });
@@ -15,9 +16,9 @@ export class OrderRepositoryInMemoryImpl implements Orders {
   async delete(orderNumber: string): Promise<void> {
     const existingOrder = await this.getSpecific(orderNumber);
 
-    const index = this.orders.indexOf(existingOrder);
+    const index = OrderRepositoryInMemoryImpl.orders.indexOf(existingOrder);
 
-    this.orders.splice(index, 1);
+    OrderRepositoryInMemoryImpl.orders.splice(index, 1);
 
     return new Promise((resolve, reject) => {
       resolve();
@@ -25,7 +26,7 @@ export class OrderRepositoryInMemoryImpl implements Orders {
   }
 
   getSpecific(orderNumber: string): Promise<IOrder> {
-    const order = this.orders.filter((p) => p.orderNumber.localeCompare(orderNumber));
+    const order = OrderRepositoryInMemoryImpl.orders.filter((p) => p.orderNumber.localeCompare(orderNumber));
 
     if (order.length === 0) {
       throw Error("Order not found");
@@ -43,11 +44,11 @@ export class OrderRepositoryInMemoryImpl implements Orders {
   update(order: IOrder): Promise<void> {
     const existingOrder = this.getSpecific(order.orderNumber);
 
-    const index = this.orders.indexOf(order);
+    const index = OrderRepositoryInMemoryImpl.orders.indexOf(order);
 
-    this.orders.splice(index, 1);
+    OrderRepositoryInMemoryImpl.orders.splice(index, 1);
 
-    this.orders.push(order);
+    OrderRepositoryInMemoryImpl.orders.push(order);
 
     return new Promise((resolve, reject) => {
       resolve();

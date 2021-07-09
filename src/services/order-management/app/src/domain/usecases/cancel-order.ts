@@ -4,6 +4,7 @@ import { Orders } from "../entities/order-repository";
 export interface CancelOrderUseCase {
   customerId: string;
   orderNumber: string;
+  reason: string;
 }
 
 export class CancelOrderCommandHandler {
@@ -21,7 +22,7 @@ export class CancelOrderCommandHandler {
 
     this._logger.logInformation("Found order, cancelling");
 
-    order.cancel();
+    order.cancel(request.reason);
 
     await this._orderRepo.update(order);
 

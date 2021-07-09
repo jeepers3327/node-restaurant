@@ -4,6 +4,7 @@ import { IAggregate } from 'node-js-ddd/dist/model/aggregate';
 export interface OrderCancelledEventData {
   orderNumber: string;
   customerId: string;
+  reason: string;
 }
 
 export class OrderCancelledEvent extends DomainEvent<OrderCancelledEventData> {

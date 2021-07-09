@@ -9,9 +9,11 @@ export interface IOrderDetails extends IValueObject {
   readonly orderItems: IOrderItem[];
   readonly orderAmount: Amount;
   readonly dispatchDate?: Date;
+  readonly paymentDate?: Date;
   readonly delivery: IOrderDelivery;
   readonly isFullyStocked: boolean;
   readonly stockCheckDate?: Date;
+  readonly cancellationReason: string;
 
   addOrderItem(
     description: string,
@@ -20,8 +22,10 @@ export interface IOrderDetails extends IValueObject {
   ): IOrderItem;
   removeOrderItem(itemToRemove: string, quantityToRemove: number): void;
   dispatchedOn(date: Date): void;
+  paymentReceivedOn(date: Date): void;
   isValid(): boolean;
   checkStock(stockChecker: StockChecker);
+  addCancellationReason(reason: string);
 }
 
 export class OrderDetailFactory {
@@ -41,6 +45,10 @@ export class OrderDetailFactory {
     }
 
     details._dispatchDate = object["_dispatchDate"];
+    details._cancellationReason = object["_cancellationReason"];
+    details._isFullyStocked = object["_isFullyStocked"];
+    details._paymentDate = object["_paymentDate"];
+    details._stockCheckedOn = object["_stockCheckedOn"];
 
     return details;
   }
@@ -53,6 +61,8 @@ class OrderDetails implements IOrderDetails {
   _deliveryAddress: IAddress;
   _isFullyStocked: boolean;
   _stockCheckedOn?: Date;
+  _cancellationReason: string;
+  _paymentDate?: Date;
 
   constructor(deliveryAddress: IAddress) {
     this._orderItems = [];
@@ -80,6 +90,10 @@ class OrderDetails implements IOrderDetails {
     return details;
   }
 
+  get paymentDate(): Date {
+    return this._paymentDate;
+  }
+
   get stockCheckedOn(): Date {
     return this._stockCheckedOn;
   }
@@ -94,6 +108,10 @@ class OrderDetails implements IOrderDetails {
 
   get dispatchDate(): Date | undefined {
     return this._dispatchDate;
+  }
+
+  get cancellationReason(): string {
+    return this._cancellationReason;
   }
 
   get orderAmount(): Amount {
@@ -160,6 +178,10 @@ class OrderDetails implements IOrderDetails {
     this._dispatchDate = date;
   }
 
+  paymentReceivedOn(date: Date) {
+    this._paymentDate = date;
+  }
+
   async checkStock(stockChecker: StockChecker) {
     this._isFullyStocked = true;
 
@@ -176,6 +198,13 @@ class OrderDetails implements IOrderDetails {
 
       orderItem.stockCheckResult = stockCheckResult;
     });
+
+    this._stockCheckedOn = new Date();
+  }
+
+  addCancellationReason(reason: string)
+  {
+    this._cancellationReason = reason;
   }
 
   private recalculateDelivery() {

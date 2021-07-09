@@ -17,7 +17,7 @@ http:
 # Configuration for your containers and service.
 image:
   # Docker build arguments. For additional overrides: https://aws.github.io/copilot-cli/docs/manifest/lb-web-service/#image-build
-  build: app\Dockerfile
+  build: app/Dockerfile
   # Port exposed through your container to route traffic to it.
   port: 80
 
@@ -31,8 +31,8 @@ exec: true     # Enable running commands in your container.
 #variables:                    # Pass environment variables as key value pairs.
 #  LOG_LEVEL: info
 
-#secrets:                      # Pass secrets from AWS Systems Manager (SSM) Parameter Store.
-#  GITHUB_TOKEN: GITHUB_TOKEN  # The key is the name of the environment variable, the value is the name of the SSM parameter.
+secrets:
+  FAUNA_DB_ACCESS_KEY: /copilot/order-management-service/test/secrets/FAUNA_DB_ACCESS_KEY  # The key is the name of the environment variable, the value is the name of the SSM parameter.
 
 # You can override any of the values defined above by environment.
 #environments:

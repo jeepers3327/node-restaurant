@@ -1,0 +1,28 @@
+# You can use any of these parameters to create conditions or mappings in your template.
+Parameters:
+  App:
+    Type: String
+    Description: Your application's name.
+  Env:
+    Type: String
+    Description: The environment name your service, job, or workflow is being deployed to.
+  Name:
+    Type: String
+    Description: The name of the service, job, or workflow being deployed.
+
+Resources:
+  OrderManagementEcsTaskPolicy:  
+    Type: AWS::IAM::ManagedPolicy
+    Properties: 
+      Description: Policy to be used by the Order Management API ECS tasks
+      Path: /
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action: 'events:PutEvents'
+            Resource: "*"
+Outputs:
+  OrderManagementEcsTaskPolicy:
+    Description: The details of the policy to be used by the ECS tasks
+    Value: !Ref OrderManagementEcsTaskPolicy          

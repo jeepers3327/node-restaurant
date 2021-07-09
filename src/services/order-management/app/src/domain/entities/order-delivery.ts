@@ -9,7 +9,7 @@ export interface IOrderDelivery extends IValueObject {
 }
 
 export class DeliveryChargeFactory {
-  static CalculateDeliveryCharge(deliverTo, orderValue: number): IOrderDelivery {
+  static CalculateDeliveryCharge(deliverTo: IAddress, orderValue: number): IOrderDelivery {
     if (orderValue >= 50) {
       return new FreeDelivery(deliverTo);
     }

@@ -1,5 +1,5 @@
 {
-    "Comment": "A state machine that does order acceptance.",
+    "Comment": "A state machine that manages order acceptance.",
     "StartAt": "Start order acceptance",
     "States": {
         "Start order acceptance": {
@@ -35,6 +35,11 @@
                     "BackoffRate": 1
                 }
             ],
+            "Next": "Order Acceptance Result"
+        },
+        "Order Acceptance Result": {
+            "Type": "Task",
+            "Resource": "${OrderAcceptanceResultFunctionArn}",
             "End": true
         }
     }

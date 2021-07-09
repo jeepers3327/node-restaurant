@@ -1,18 +1,18 @@
 import { EventBridge } from "aws-sdk";
 import { IHandler } from "node-js-ddd/dist/events/domain-event-handling";
-import { OrderCreatedEvent } from "../../domain/events/order-created/order-created";
+import { OrderAcceptedEvent } from "../../domain/events/order-accepted/order-accepted-event";
 
 // a client can be shared by different commands.
 const eventbridge = new EventBridge();
-export class OrderCreatedEventPublisher implements IHandler<OrderCreatedEvent> {
-  typeToHandle = "order-created";
-  async handle(evt: OrderCreatedEvent): Promise<void> {
+export class OrderCancelledEventPublisher implements IHandler<OrderAcceptedEvent> {
+  typeToHandle = OrderAcceptedEvent.typeName;
+  async handle(evt: OrderAcceptedEvent): Promise<void> {
     const data = {
       Entries: [
         {
           Source: "com.order-management",
           EventBusName: "default",
-          DetailType: "order-created",
+          DetailType: OrderAcceptedEvent.typeName,
           Time: new Date(),
           Detail: JSON.stringify(evt),
         },

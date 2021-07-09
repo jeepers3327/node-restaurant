@@ -16,6 +16,7 @@ import { IOrderItem } from "../src/domain/entities/order-item";
 import { IOrder } from "../src/domain/entities/order";
 import { ProcessPaymentCommandHandler } from "../src/domain/usecases/process-payment";
 import { PaymentProcessor } from "../src/domain/services/payment-processor";
+import { MockHandler, MockPaymentProcessor, MockStockChecker } from "./mocks/mocks";
 
 const customerId = "consulting@jameseastham.co.uk";
 const address: IAddress = {
@@ -65,10 +66,10 @@ describe("Check Stock Use Case Tests", () => {
 
     testOrder.details.addOrderItem("Pizza", 10, 1);
 
-    let orderRepo = new OrderRepositoryInMemoryImpl();
+    const orderRepo = new OrderRepositoryInMemoryImpl();
     await orderRepo.addNew(testOrder);
 
-    let handler = new CheckOrderStockCommandHandler(
+    const handler = new CheckOrderStockCommandHandler(
       orderRepo,
       new MockStockChecker(true),
       new WinstonLogger()
@@ -91,10 +92,10 @@ describe("Check Stock Use Case Tests", () => {
 
     testOrder.details.addOrderItem("Pizza", 10, 1);
 
-    let orderRepo = new OrderRepositoryInMemoryImpl();
+    const orderRepo = new OrderRepositoryInMemoryImpl();
     await orderRepo.addNew(testOrder);
 
-    let handler = new CheckOrderStockCommandHandler(
+    const handler = new CheckOrderStockCommandHandler(
       orderRepo,
       new MockStockChecker(false),
       new WinstonLogger()
@@ -125,10 +126,10 @@ describe("Process Payment Use Case Tests", () => {
 
     await testOrder.details.checkStock(new MockStockChecker(true));
 
-    let orderRepo = new OrderRepositoryInMemoryImpl();
+    const orderRepo = new OrderRepositoryInMemoryImpl();
     await orderRepo.addNew(testOrder);
 
-    let handler = new ProcessPaymentCommandHandler(
+    const handler = new ProcessPaymentCommandHandler(
       orderRepo,
       new MockPaymentProcessor(true),
       new WinstonLogger()
@@ -153,10 +154,10 @@ describe("Process Payment Use Case Tests", () => {
 
     await testOrder.details.checkStock(new MockStockChecker(true));
 
-    let orderRepo = new OrderRepositoryInMemoryImpl();
+    const orderRepo = new OrderRepositoryInMemoryImpl();
     await orderRepo.addNew(testOrder);
 
-    let handler = new ProcessPaymentCommandHandler(
+    const handler = new ProcessPaymentCommandHandler(
       orderRepo,
       new MockPaymentProcessor(false),
       new WinstonLogger()
@@ -179,16 +180,16 @@ describe("Process Payment Use Case Tests", () => {
 
     testOrder.details.addOrderItem("Pizza", 10, 1);
 
-    let orderRepo = new OrderRepositoryInMemoryImpl();
+    const orderRepo = new OrderRepositoryInMemoryImpl();
     await orderRepo.addNew(testOrder);
 
-    let handler = new ProcessPaymentCommandHandler(
+    const handler = new ProcessPaymentCommandHandler(
       orderRepo,
       new MockPaymentProcessor(false),
       new WinstonLogger()
     );
 
-    let result = await handler.execute({
+    const result = await handler.execute({
       orderId: testOrder.orderNumber,
       customerId: testOrder.customerId,
     });
@@ -197,43 +198,3 @@ describe("Process Payment Use Case Tests", () => {
     expect(result.success).to.equal(false);
   });
 });
-
-class MockPaymentProcessor implements PaymentProcessor {
-  private shouldReturnPaymentComplete: boolean;
-
-  constructor(shouldReturnPaymentComplete: boolean) {
-    this.shouldReturnPaymentComplete = shouldReturnPaymentComplete;
-  }
-
-  process(order: IOrder): Promise<string> {
-    return new Promise((resolve) => {
-      if (this.shouldReturnPaymentComplete) {
-        return resolve("OK");
-      } else {
-        return resolve(`Payment failed`);
-      }
-    });
-  }
-}
-
-class MockStockChecker implements StockChecker {
-  private shouldReturnInStock: boolean;
-
-  constructor(returnInStock: boolean) {
-    this.shouldReturnInStock = returnInStock;
-  }
-  checkStock(item: IOrderItem): Promise<string> {
-    return new Promise((resolve) => {
-      if (this.shouldReturnInStock) {
-        return resolve("OK");
-      } else {
-        return resolve(`${item.description} not in stock`);
-      }
-    });
-  }
-}
-
-class MockHandler implements IHandler<OrderCreatedEvent> {
-  typeToHandle = "order-created";
-  handle(evt: OrderCreatedEvent): void {}
-}

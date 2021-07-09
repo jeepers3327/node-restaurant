@@ -1,12 +1,5 @@
 import { Orders } from "../entities/order-repository";
-import { OrderFactory } from "../entities/order";
 import { Logger } from "../../common/logger";
-import {
-  DomainEvents,
-  IHandler,
-} from "node-js-ddd/dist/events/domain-event-handling";
-import { OrderCreatedEvent } from "../events/order-created/order-created";
-import { IAddress } from "../entities/address";
 import { StockChecker } from "../services/stock-check-service";
 
 export interface CheckOrderStockUseCase {

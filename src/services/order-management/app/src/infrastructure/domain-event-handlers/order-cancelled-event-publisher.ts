@@ -14,7 +14,7 @@ export class OrderCancelledEventPublisher implements IHandler<OrderCancelledEven
           EventBusName: "default",
           DetailType: "order-cancelled",
           Time: new Date(),
-          Details: JSON.stringify(evt),
+          Detail: JSON.stringify(evt),
         },
       ],
     };

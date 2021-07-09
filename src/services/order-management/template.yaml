@@ -5,90 +5,7 @@ Description: >-
 Transform:
 - AWS::Serverless-2016-10-31
 
-Resources:
-  getOrderFunction:
-    Type: AWS::Serverless::Function
-    Metadata:
-      BuildMethod: makefile
-    Properties:
-      CodeUri: app/
-      Handler: dist/src/handlers/get-order.handler
-      Runtime: nodejs12.x
-      MemorySize: 128
-      Timeout: 100
-      Description: Get a customers order
-      Events:
-        Api:
-          Type: Api
-          Properties:
-            Path: /{customerId}/{orderNumber}
-            Method: GET
-  getCustomerOrdersFunction:
-    Type: AWS::Serverless::Function
-    Metadata:
-      BuildMethod: makefile
-    Properties:
-      CodeUri: app/
-      Handler: dist/src/handlers/get-customer-orders.handler
-      Runtime: nodejs12.x
-      MemorySize: 128
-      Timeout: 100
-      Description: Get all orders for a customer
-      Events:
-        Api:
-          Type: Api
-          Properties:
-            Path: /{customerId}/orders/list
-            Method: GET
-
-  createOrderFunction:
-    Type: AWS::Serverless::Function
-    Metadata:
-      BuildMethod: makefile
-    Properties:
-      CodeUri: app/
-      Handler: dist/src/handlers/create-order.handler
-      Runtime: nodejs12.x
-      MemorySize: 128
-      Timeout: 100
-      Description: Create a new customer order
-      Policies:
-        - Statement:
-          - Effect: Allow
-            Resource: '*'
-            Action:
-              - events:PutEvents
-      Events:
-        Api:
-          Type: Api
-          Properties:
-            Path: /{customerId}
-            Method: POST
-            
-  cancelOrderFunction:
-    Type: AWS::Serverless::Function
-    Metadata:
-      BuildMethod: makefile
-    Properties:
-      CodeUri: app/
-      Handler: dist/src/handlers/cancel-order.handler
-      Runtime: nodejs12.x
-      MemorySize: 128
-      Timeout: 100
-      Description: Cancel a customer order
-      Policies:
-        - Statement:
-          - Effect: Allow
-            Resource: '*'
-            Action:
-              - events:PutEvents
-      Events:
-        Api:
-          Type: Api
-          Properties:
-            Path: /{customerId}/{orderNumber}/cancel
-            Method: POST
-            
+Resources:            
   orderDispatchedHandler:
     Type: AWS::Serverless::Function
     Metadata:
@@ -145,6 +62,18 @@ Resources:
       MemorySize: 128
       Timeout: 100
       Description: Payment processing function used in order acceptance step function.
+            
+  orderAcceptanceResult:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: makefile
+    Properties:
+      CodeUri: app/
+      Handler: dist/src/handlers/order-acceptance-result.handler
+      Runtime: nodejs12.x
+      MemorySize: 128
+      Timeout: 100
+      Description: Result handler for processing stock and payment results used in order acceptance step function.
       
   OrderAcceptanceStateMachine:
     Type: AWS::Serverless::StateMachine # More info about State Machine Resource: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-statemachine.html
@@ -154,15 +83,55 @@ Resources:
         StartOrderAcceptanceFunctionArn: !GetAtt startOrderAcceptance.Arn
         StockCheckerFunctionArn: !GetAtt stockChecker.Arn
         PaymentProcessorFunctionArn: !GetAtt paymentProcessor.Arn
-      Policies: # Find out more about SAM policy templates: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-policy-templates.html
+        OrderAcceptanceResultFunctionArn: !GetAtt orderAcceptanceResult.Arn
+      Policies:
         - LambdaInvokePolicy:
             FunctionName: !Ref startOrderAcceptance
         - LambdaInvokePolicy:
             FunctionName: !Ref stockChecker
         - LambdaInvokePolicy:
             FunctionName: !Ref paymentProcessor
+        - LambdaInvokePolicy:
+            FunctionName: !Ref orderAcceptanceResult
 
-Outputs:
-  WebEndpoint:
-    Description: "API Gateway endpoint URL for Prod stage"
-    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/"
+  OrderAcceptanceEventIAMRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: "Allow"
+            Principal:
+              Service:
+                  - Fn::Sub: "events.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      Policies:
+        -
+          PolicyName: StateMachineExecutionPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              -
+                Effect: "Allow"
+                Action: "states:StartExecution"
+                Resource:
+                  - !Ref OrderAcceptanceStateMachine
+
+  OrderCreatedEventRule:
+    Type: "AWS::Events::Rule"
+    Properties:
+      Description: "Event rule to trigger for order created events and start the acceptance state machine"
+      Name: 'OrderCreatedEventRule'
+      EventPattern:
+        source:
+          - com.order-management
+        detail-type:
+          - order-created
+      State: "ENABLED"
+      Targets:
+        -
+          Arn: !Ref OrderAcceptanceStateMachine
+          Id: !GetAtt OrderAcceptanceStateMachine.Name
+          RoleArn: !GetAtt OrderAcceptanceEventIAMRole.Arn
