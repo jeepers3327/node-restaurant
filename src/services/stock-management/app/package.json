@@ -37,7 +37,7 @@
     "express": "^4.17.1",
     "express-winston": "^4.1.0",
     "faunadb": "^4.3.0",
-    "node-js-ddd": "^1.0.9",
+    "node-js-ddd": "^1.0.10",
     "uuid": "^8.3.2",
     "winston": "^3.3.3"
   }

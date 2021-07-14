@@ -25,4 +25,4 @@ Resources:
 Outputs:
   OrderManagementEcsTaskPolicy:
     Description: The details of the policy to be used by the ECS tasks
-    Value: !Ref OrderManagementEcsTaskPolicy          
+    Value: !Ref OrderManagementEcsTaskPolicy

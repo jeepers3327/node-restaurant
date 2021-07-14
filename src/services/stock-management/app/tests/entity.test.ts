@@ -2,8 +2,17 @@ import "mocha";
 import { assert, expect } from "chai";
 import { MenuItem } from "../src/domain/entities/menu-item";
 import { StockedIngredient } from "../src/domain/entities/ingredient";
+import { Menu } from "../src/domain/entities/menu";
 
 describe("Entity tests", () => {
+  it("Should be able to create a new menu", () => {
+    const menu = Menu.Create("Pizzas");
+
+    expect(menu.name).to.equal("Pizzas");
+    expect(menu.items.length).to.equal(0);
+    expect(menu.id.length).to.greaterThan(0);
+  });
+
   it("Should be able to create a new menu item", () => {
     const item = new MenuItem();
     item.name = "Pizza";
