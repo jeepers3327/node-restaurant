@@ -1,2 +1,0 @@
-secrets:
-  FAUNA_DB_ACCESS_KEY: /copilot/order-management-service/test/secrets/FAUNA_DB_ACCESS_KEY  # The key is the name of the environment variable, the value is the name of the SSM parameter.

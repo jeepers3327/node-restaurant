@@ -16,9 +16,14 @@ export class CancelOrderCommandHandler {
   }
 
   async execute(request: CancelOrderUseCase) {
-    this._logger.logInformation(`Received request to cancel ${request.orderNumber} for ${request.customerId}`);
+    this._logger.logInformation(
+      `Received request to cancel ${request.orderNumber} for ${request.customerId}`
+    );
 
-    const order = await this._orderRepo.getSpecific(request.customerId, request.orderNumber);
+    const order = await this._orderRepo.getSpecific(
+      request.customerId,
+      request.orderNumber
+    );
 
     this._logger.logInformation("Found order, cancelling");
 

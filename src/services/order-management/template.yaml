@@ -3,9 +3,9 @@ Description: >-
   order-management-service code
 
 Transform:
-- AWS::Serverless-2016-10-31
+  - AWS::Serverless-2016-10-31
 
-Resources:            
+Resources:
   orderDispatchedHandler:
     Type: AWS::Serverless::Function
     Metadata:
@@ -19,14 +19,14 @@ Resources:
       Description: Handle an order dispatched event from the event bus.
       Events:
         Trigger:
-          Type: CloudWatchEvent 
+          Type: CloudWatchEvent
           Properties:
             Pattern:
               source:
                 - com.kitchen
               detail-type:
                 - order-dispatched
-            
+
   startOrderAcceptance:
     Type: AWS::Serverless::Function
     Metadata:
@@ -38,7 +38,7 @@ Resources:
       MemorySize: 128
       Timeout: 100
       Description: Sets up initial state orchestration for order acceptance
-            
+
   stockChecker:
     Type: AWS::Serverless::Function
     Metadata:
@@ -50,7 +50,7 @@ Resources:
       MemorySize: 128
       Timeout: 100
       Description: Stock checker function used in order acceptance step function.
-            
+
   paymentProcessor:
     Type: AWS::Serverless::Function
     Metadata:
@@ -62,7 +62,7 @@ Resources:
       MemorySize: 128
       Timeout: 100
       Description: Payment processing function used in order acceptance step function.
-            
+
   orderAcceptanceResult:
     Type: AWS::Serverless::Function
     Metadata:
@@ -74,7 +74,7 @@ Resources:
       MemorySize: 128
       Timeout: 100
       Description: Result handler for processing stock and payment results used in order acceptance step function.
-      
+
   OrderAcceptanceStateMachine:
     Type: AWS::Serverless::StateMachine # More info about State Machine Resource: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-statemachine.html
     Properties:
@@ -100,21 +100,18 @@ Resources:
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
-          -
-            Effect: "Allow"
+          - Effect: "Allow"
             Principal:
               Service:
-                  - Fn::Sub: "events.amazonaws.com"
+                - Fn::Sub: "events.amazonaws.com"
             Action:
               - "sts:AssumeRole"
       Policies:
-        -
-          PolicyName: StateMachineExecutionPolicy
+        - PolicyName: StateMachineExecutionPolicy
           PolicyDocument:
             Version: "2012-10-17"
             Statement:
-              -
-                Effect: "Allow"
+              - Effect: "Allow"
                 Action: "states:StartExecution"
                 Resource:
                   - !Ref OrderAcceptanceStateMachine
@@ -123,7 +120,7 @@ Resources:
     Type: "AWS::Events::Rule"
     Properties:
       Description: "Event rule to trigger for order created events and start the acceptance state machine"
-      Name: 'OrderCreatedEventRule'
+      Name: "OrderCreatedEventRule"
       EventPattern:
         source:
           - com.order-management
@@ -131,7 +128,120 @@ Resources:
           - order-created
       State: "ENABLED"
       Targets:
-        -
-          Arn: !Ref OrderAcceptanceStateMachine
+        - Arn: !Ref OrderAcceptanceStateMachine
           Id: !GetAtt OrderAcceptanceStateMachine.Name
           RoleArn: !GetAtt OrderAcceptanceEventIAMRole.Arn
+
+  OrderMangementWebSocketApi:
+    Type: AWS::ApiGatewayV2::Api
+    Properties:
+      Name: OrderMangementWebSocketApi
+      ProtocolType: WEBSOCKET
+      RouteSelectionExpression: "$request.body.action"
+
+  ConnectRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref OrderMangementWebSocketApi
+      RouteKey: $connect
+      AuthorizationType: NONE
+      OperationName: ConnectRoute
+      Target: !Join
+        - "/"
+        - - "integrations"
+          - !Ref ConnectInteg
+  ConnectInteg:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref OrderMangementWebSocketApi
+      Description: Connect Integration
+      IntegrationType: AWS_PROXY
+      IntegrationUri:
+        Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${OnConnectFunction.Arn}/invocations
+
+  DisconnectRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref OrderMangementWebSocketApi
+      RouteKey: $disconnect
+      AuthorizationType: NONE
+      OperationName: DisconnectRoute
+      Target: !Join
+        - "/"
+        - - "integrations"
+          - !Ref DisconnectInteg
+
+  DisconnectInteg:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref OrderMangementWebSocketApi
+      Description: Disconnect Integration
+      IntegrationType: AWS_PROXY
+      IntegrationUri:
+        Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${OnDisconnectFunction.Arn}/invocations
+
+  ConnectionsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: "globalIdentifier"
+          AttributeType: "S"
+        - AttributeName: "connectionId"
+          AttributeType: "S"
+      KeySchema:
+        - AttributeName: "globalIdentifier"
+          KeyType: "HASH"
+        - AttributeName: "connectionId"
+          KeyType: "RANGE"
+      TableName: order-management-connections
+
+  OnConnectFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: makefile
+    Properties:
+      CodeUri: app/
+      Handler: dist/src/handlers/connect.handler
+      MemorySize: 256
+      Runtime: nodejs12.x
+      Environment:
+        Variables:
+          TABLE_NAME: order-management-connections
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: order-management-connections
+
+  OnConnectPermission:
+    Type: AWS::Lambda::Permission
+    DependsOn:
+      - OrderMangementWebSocketApi
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref OnConnectFunction
+      Principal: apigateway.amazonaws.com
+
+  OnDisconnectFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: makefile
+    Properties:
+      CodeUri: app/
+      Handler: dist/src/handlers/disconnect.handler
+      MemorySize: 256
+      Runtime: nodejs12.x
+      Environment:
+        Variables:
+          TABLE_NAME: order-management-connections
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: order-management-connections
+
+  OnDisconnectPermission:
+    Type: AWS::Lambda::Permission
+    DependsOn:
+      - OrderMangementWebSocketApi
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref OnDisconnectFunction
+      Principal: apigateway.amazonaws.com
