@@ -2,34 +2,35 @@ import { IOrder } from "../../domain/entities/order";
 import * as stateDef from "./order-acceptance.asl.json"; // import to force ASL definition to be included in compiled files.
 
 export class OrderAcceptanceState {
-    input: Input;
-    output: Output;
-    audit: Audit;
+  input: Input;
+  output: Output;
+  audit: Audit;
 
-    constructor(order: IOrder)
-    {
-        this.input = {
-            order: order
-        }
+  constructor(customerId: string, orderNumber: string) {
+    this.input = {
+      customerId: customerId,
+      orderNumber: orderNumber,
+    };
 
-        this.audit = {
-            startDate: new Date(),
-        }
+    this.audit = {
+      startDate: new Date(),
+    };
 
-        this.output = new Output();
-    }
+    this.output = new Output();
+  }
 }
 
 export class Input {
-    order: IOrder
+  customerId: string;
+  orderNumber: string;
 }
 
 export class Output {
-    stockCheckSuccess: boolean;
-    paymentSuccess: boolean;
-    outputMessages: string[] = [];
+  stockCheckSuccess: boolean;
+  paymentSuccess: boolean;
+  outputMessages: string[] = [];
 }
 
 export class Audit {
-    startDate: Date;
+  startDate: Date;
 }

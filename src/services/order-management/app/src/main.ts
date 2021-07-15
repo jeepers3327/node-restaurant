@@ -2,22 +2,29 @@ import { ApiResponse } from "./common/api-response";
 import { WinstonLogger } from "./infrastructure/logger-winston";
 import { OrderRepositoryFaunaDbImpl } from "./infrastructure/order-repository-fauna-db";
 
-import express from 'express';
+import express from "express";
 
-import cors from 'cors';
+import cors from "cors";
 import { InfrastructureSetup } from "./infrastructure/domain-event-handlers/add-handlers";
-import { CancelOrderCommandHandler } from "./domain/usecases/cancel-order";
-import { CreateOrderCommandHandler } from "./domain/usecases/create-new-order";
+import {
+  CancelOrderCommand,
+  CancelOrderCommandHandler,
+} from "./domain/usecases/cancel-order";
+import {
+  CreateNewOrderCommand,
+  CreateOrderCommandHandler,
+} from "./domain/usecases/create-new-order";
+import { CommandHandler } from "./infrastructure/command-handler";
+import { OrderFactory } from "./domain/entities/order";
 
 const app = express();
 const port = 80; // default port to listen
 
 const logger = new WinstonLogger();
-  const orders = new OrderRepositoryFaunaDbImpl(
-    process.env.FAUNA_DB_ACCESS_KEY
-  );
+const orders = new OrderRepositoryFaunaDbImpl(process.env.FAUNA_DB_ACCESS_KEY);
+const commandHandler = new CommandHandler();
 
-// here we are adding middleware to parse all incoming requests as JSON 
+// here we are adding middleware to parse all incoming requests as JSON
 app.use(express.json());
 
 // here we are adding middleware to allow cross-origin requests
@@ -28,7 +35,7 @@ app.get("/health", (req, res) => {
   res.send("OK");
 });
 
-app.get("/:customerId/:orderNumber", async (req, res) => {  
+app.get("/:customerId/:orderNumber", async (req, res) => {
   try {
     const order = await orders.getSpecific(
       req.params.customerId,
@@ -38,7 +45,7 @@ app.get("/:customerId/:orderNumber", async (req, res) => {
     res.send(new ApiResponse<any>(true, "OK", order.asJson()));
   } catch (error) {
     logger.logError(
-      `Failure retrieving order ${req.params.customerId} for ${req.params .orderNumber}`,
+      `Failure retrieving order ${req.params.customerId} for ${req.params.orderNumber}`,
       error
     );
 
@@ -48,9 +55,7 @@ app.get("/:customerId/:orderNumber", async (req, res) => {
 
 app.get("/:customerId/orders/list", async (req, res) => {
   try {
-    const order = await orders.getForCustomer(
-      req.params.customerId
-    );
+    const order = await orders.getForCustomer(req.params.customerId);
 
     res.send(new ApiResponse<any>(true, "OK", order));
   } catch (error) {
@@ -68,46 +73,56 @@ app.post("/:customerId/:orderNumber/cancel", async (req, res) => {
     req.params.customerId === undefined ||
     req.params.orderNumber === undefined
   ) {
-    return new ApiResponse<string>(false, 'A valid customer id and order number must be provided', '').respond();
+    return new ApiResponse<string>(
+      false,
+      "A valid customer id and order number must be provided",
+      ""
+    ).respond();
   }
 
   InfrastructureSetup.addHandlers();
 
-  const cancelOrderHandler = new CancelOrderCommandHandler(
-    orders,
-    logger
-  );
+  const command = new CancelOrderCommand();
+  command.customerId = req.params.customerId;
+  command.orderNumber = req.params.orderNumber;
 
-  await cancelOrderHandler.execute({
-    customerId: req.params.customerId,
-    orderNumber: req.params.orderNumber,
-    reason: 'Manual order cancellation'
-  });
-
-  res.send(new ApiResponse<string>(true, 'OK', 'Cancelled'));
+  commandHandler
+    .handle(command)
+    .then(() => {
+      res.send(
+        new ApiResponse<string>(true, "OK", "Cancellation request received")
+      );
+    })
+    .catch((err) => {
+      res.send(err);
+    });
 });
 
 app.post("/:customerId", async (req, res) => {
-  if (
-    req.params.customerId === undefined
-  ) {
-    return new ApiResponse<string>(false, 'A valid customer id must be provided', '').respond();
+  if (req.params.customerId === undefined) {
+    return new ApiResponse<string>(
+      false,
+      "A valid customer id must be provided",
+      ""
+    ).respond();
   }
 
   InfrastructureSetup.addHandlers();
 
-  const createOrderHandler = new CreateOrderCommandHandler(
-    orders,
-    logger
-  );
+  const command = new CreateNewOrderCommand();
+  command.customerId = req.params.customerId;
+  command.items = req.body.orderItems;
+  command.address = req.body.deliveryAddress;
+  command.orderNumber = OrderFactory.generateNewOrderNumber();
 
-  const createdOrderNumber = await createOrderHandler.execute({
-    customerId: req.params.customerId,
-    items: req.body.orderItems,
-    address: req.body.deliveryAddress
-  });
-
-  res.send(new ApiResponse<string>(true, 'OK', createdOrderNumber));
+  commandHandler
+    .handle(command)
+    .then(() => {
+      res.send(new ApiResponse<string>(true, "OK", command.orderNumber));
+    })
+    .catch((err) => {
+      res.send(err);
+    });
 });
 
 // start the Express server

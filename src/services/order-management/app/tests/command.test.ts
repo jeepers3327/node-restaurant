@@ -16,7 +16,11 @@ import { IOrderItem } from "../src/domain/entities/order-item";
 import { IOrder } from "../src/domain/entities/order";
 import { ProcessPaymentCommandHandler } from "../src/domain/usecases/process-payment";
 import { PaymentProcessor } from "../src/domain/services/payment-processor";
-import { MockHandler, MockPaymentProcessor, MockStockChecker } from "./mocks/mocks";
+import {
+  MockHandler,
+  MockPaymentProcessor,
+  MockStockChecker,
+} from "./mocks/mocks";
 
 const customerId = "consulting@jameseastham.co.uk";
 const address: IAddress = {
@@ -36,7 +40,11 @@ describe("Create order command tests", () => {
   });
 
   it("Should be able to execute a create order command", async () => {
+    const orderNumber = OrderFactory.generateNewOrderNumber();
+
     const newOrderNumber = await handler.execute({
+      name: "create-new-order",
+      orderNumber: orderNumber,
       customerId: customerId,
       items: [
         {
@@ -48,7 +56,7 @@ describe("Create order command tests", () => {
       address: address,
     });
 
-    expect(newOrderNumber.length).to.greaterThan(0);
+    expect(newOrderNumber).to.equal(orderNumber);
   });
 });
 
@@ -194,7 +202,9 @@ describe("Process Payment Use Case Tests", () => {
       customerId: testOrder.customerId,
     });
 
-    expect(result.message).to.equal('Cannot process a payment that has not been stock checked.')
+    expect(result.message).to.equal(
+      "Cannot process a payment that has not been stock checked."
+    );
     expect(result.success).to.equal(false);
   });
 });

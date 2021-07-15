@@ -6,6 +6,27 @@ Transform:
   - AWS::Serverless-2016-10-31
 
 Resources:
+  cancelOrderCommandHandler:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: makefile
+    Properties:
+      CodeUri: app/
+      Handler: dist/src/handlers/cancel-order.handler
+      Runtime: nodejs12.x
+      MemorySize: 128
+      Timeout: 100
+      Description: Handle a cancel order command
+      Events:
+        Trigger:
+          Type: CloudWatchEvent
+          Properties:
+            Pattern:
+              source:
+                - com.order-management
+              detail-type:
+                - cancel-order
+
   orderDispatchedHandler:
     Type: AWS::Serverless::Function
     Metadata:
@@ -76,7 +97,7 @@ Resources:
       Description: Result handler for processing stock and payment results used in order acceptance step function.
 
   OrderAcceptanceStateMachine:
-    Type: AWS::Serverless::StateMachine # More info about State Machine Resource: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-statemachine.html
+    Type: AWS::Serverless::StateMachine
     Properties:
       DefinitionUri: app/dist/src/infrastructure/state-machine/order-acceptance.asl.json
       DefinitionSubstitutions:
@@ -119,13 +140,13 @@ Resources:
   OrderCreatedEventRule:
     Type: "AWS::Events::Rule"
     Properties:
-      Description: "Event rule to trigger for order created events and start the acceptance state machine"
+      Description: "Event rule to trigger for create new order events and start the acceptance state machine"
       Name: "OrderCreatedEventRule"
       EventPattern:
         source:
           - com.order-management
         detail-type:
-          - order-created
+          - create-new-order
       State: "ENABLED"
       Targets:
         - Arn: !Ref OrderAcceptanceStateMachine
@@ -194,7 +215,7 @@ Resources:
           KeyType: "HASH"
         - AttributeName: "connectionId"
           KeyType: "RANGE"
-      TableName: order-management-connections
+      TableName: order-management-ws-connect
 
   OnConnectFunction:
     Type: AWS::Serverless::Function

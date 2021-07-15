@@ -18,10 +18,10 @@ export class OrderCreatedEventPublisher implements IHandler<OrderCreatedEvent> {
         },
       ],
     };
-    
+
     const result = await eventbridge.putEvents(data).promise();
 
-    console.log('Event publish result');
+    console.log("Event publish result");
     console.log(result);
   }
 }

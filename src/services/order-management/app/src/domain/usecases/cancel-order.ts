@@ -1,7 +1,11 @@
+import { ICommand } from "../../common/command";
 import { Logger } from "../../common/logger";
 import { Orders } from "../entities/order-repository";
 
-export interface CancelOrderUseCase {
+export class CancelOrderCommand implements ICommand {
+  get name(): string {
+    return "cancel-order";
+  }
   customerId: string;
   orderNumber: string;
   reason: string;
@@ -15,7 +19,7 @@ export class CancelOrderCommandHandler {
     this._logger = logger;
   }
 
-  async execute(request: CancelOrderUseCase) {
+  async execute(request: CancelOrderCommand): Promise<void> {
     this._logger.logInformation(
       `Received request to cancel ${request.orderNumber} for ${request.customerId}`
     );

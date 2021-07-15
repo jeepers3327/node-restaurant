@@ -43,6 +43,7 @@ export class OrderFactory {
 
     return order;
   }
+  private;
 
   static CreateFromObject(object: any): IOrder {
     const order = new Order(
@@ -56,6 +57,24 @@ export class OrderFactory {
     order._orderState = object["_orderState"];
 
     return order;
+  }
+
+  static generateNewOrderNumber(): string {
+    const result = [];
+    const characters =
+      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    const charactersLength = characters.length;
+    for (let i = 0; i < 5; i++) {
+      result.push(
+        characters.charAt(Math.floor(Math.random() * charactersLength))
+      );
+    }
+
+    const date = new Date();
+
+    return `${date.getFullYear()}${date.getMonth()}${date.getDay()}${result
+      .join("")
+      .toUpperCase()}`;
   }
 }
 
@@ -72,10 +91,10 @@ class Order extends Aggregate implements IOrder {
     orderNumber: string,
     orderDate: Date,
     deliveryAddress: IAddress,
-    id = ''
+    id = ""
   ) {
     super(id);
-    
+
     this._customerId = customerId;
     this._orderNumber = orderNumber;
     this._orderDate = orderDate;
@@ -86,7 +105,7 @@ class Order extends Aggregate implements IOrder {
   static Create(customerId: string, deliveryAddress: IAddress): Order {
     const order = new Order(
       customerId,
-      Order.generateNewOrderNumber(),
+      OrderFactory.generateNewOrderNumber(),
       new Date(),
       deliveryAddress
     );
@@ -151,17 +170,23 @@ class Order extends Aggregate implements IOrder {
       throw Error("Order has already been dispatched");
     }
 
-    if (!this._details.isFullyStocked || this.details.paymentReceivedOn === undefined)
-    {
-      throw Error("Cannot accept an order that has not been paid and stock checked");
+    if (
+      !this._details.isFullyStocked ||
+      this.details.paymentReceivedOn === undefined
+    ) {
+      throw Error(
+        "Cannot accept an order that has not been paid and stock checked"
+      );
     }
 
-    this._orderState = 'Accepted';
+    this._orderState = "Accepted";
 
-    this.addDomainEvent(new OrderAcceptedEvent(this, {
-      orderNumber: this.orderNumber,
-      customerId: this.customerId
-    }));
+    this.addDomainEvent(
+      new OrderAcceptedEvent(this, {
+        orderNumber: this.orderNumber,
+        customerId: this.customerId,
+      })
+    );
   }
 
   cancel(cancellationReason: string) {
@@ -180,7 +205,7 @@ class Order extends Aggregate implements IOrder {
       new OrderCancelledEvent(this, {
         orderNumber: this.orderNumber,
         customerId: this.customerId,
-        reason: cancellationReason
+        reason: cancellationReason,
       })
     );
   }
@@ -188,23 +213,5 @@ class Order extends Aggregate implements IOrder {
   asJson(): any {
     this.clearDomainEvents();
     return this;
-  }
-
-  private static generateNewOrderNumber() {
-    const result = [];
-    const characters =
-      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-    const charactersLength = characters.length;
-    for (let i = 0; i < 5; i++) {
-      result.push(
-        characters.charAt(Math.floor(Math.random() * charactersLength))
-      );
-    }
-
-    const date = new Date();
-
-    return `${date.getFullYear()}${date.getMonth()}${date.getDay()}${result
-      .join("")
-      .toUpperCase()}`;
   }
 }
