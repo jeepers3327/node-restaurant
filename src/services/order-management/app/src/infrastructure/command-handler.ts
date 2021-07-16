@@ -1,11 +1,7 @@
 import { EventBridge } from "aws-sdk";
 import { ICommand } from "../common/command";
 
-const eventbridge = new EventBridge({
-  region: "eu-west-2",
-  accessKeyId: "AKIAW22GPLBZ2M2L3TUU",
-  secretAccessKey: "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",
-});
+const eventbridge = new EventBridge();
 
 export class CommandHandler {
   async handle(command: ICommand): Promise<void> {
