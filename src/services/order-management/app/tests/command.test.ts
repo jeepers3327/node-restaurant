@@ -1,210 +1,107 @@
-import "mocha";
 import { expect, assert } from "chai";
-import { CreateOrderCommandHandler } from "../src/domain/usecases/create-new-order";
-import { OrderRepositoryInMemoryImpl } from "../src/infrastructure/order-repository-in-memory";
-import { WinstonLogger } from "../src/infrastructure/logger-winston";
-import {
-  DomainEvents,
-  IHandler,
-} from "node-js-ddd/dist/events/domain-event-handling";
-import { OrderCreatedEvent } from "../src/domain/events/order-created/order-created";
-import { IAddress } from "../src/domain/entities/address";
-import { OrderFactory } from "../src/domain/entities/order";
-import { CheckOrderStockCommandHandler } from "../src/domain/usecases/check-order-stock";
-import { StockChecker } from "../src/domain/services/stock-check-service";
-import { IOrderItem } from "../src/domain/entities/order-item";
-import { IOrder } from "../src/domain/entities/order";
-import { ProcessPaymentCommandHandler } from "../src/domain/usecases/process-payment";
-import { PaymentProcessor } from "../src/domain/services/payment-processor";
-import {
-  MockHandler,
-  MockPaymentProcessor,
-  MockStockChecker,
-} from "./mocks/mocks";
+import { instance, mock, when, verify, anything } from "ts-mockito";
+import { describe, it } from "mocha";
+import { StartOrderCommandHandler } from "../src/core/commands/start-order.command";
+import { MockEventBus } from "./mocks/mocks";
+import { AddOrderItemCommandHandler } from "../src/core/commands/add-order-item.command";
+import { Events } from "../src/core/events/events";
+import { StockCheckRequestedEvent } from "../src/core/events/stock-check-requested.event";
+import { Order, Orders } from "../src/core/models/order.model";
 
-const customerId = "consulting@jameseastham.co.uk";
-const address: IAddress = {
-  addressLine1: "Test address",
-  country: "GB",
-  postcode: "BB4456",
-};
+const eventBus = new MockEventBus();
 
-const handler = new CreateOrderCommandHandler(
-  new OrderRepositoryInMemoryImpl(),
-  new WinstonLogger()
-);
+describe("Command tests", () => {
+  it("Start Order Command - Should complete successfully with valid email address input", async () => {
+    let handler = new StartOrderCommandHandler(eventBus);
 
-describe("Create order command tests", () => {
-  beforeEach(function () {
-    DomainEvents.registerHandler(new MockHandler());
+    let result = handler.handle({
+      emailAddress: "test@test.com",
+    });
+
+    expect(result.data.length).to.greaterThan(0);
+    expect(result.success).to.equal(true);
+    expect(result.friendlyMessage).to.equal("OK");
+    expect(result.rowsAffected).to.equal(1);
   });
 
-  it("Should be able to execute a create order command", async () => {
-    const orderNumber = OrderFactory.generateNewOrderNumber();
+  it("Start Order Command - Should fail when a empty email address is sent", async () => {
+    let handler = new StartOrderCommandHandler(eventBus);
 
-    const newOrderNumber = await handler.execute({
-      name: "create-new-order",
-      orderNumber: orderNumber,
-      customerId: customerId,
-      items: [
-        {
-          description: "1234",
-          quantity: 1,
-          price: 150,
-        },
-      ],
-      address: address,
+    let result = handler.handle({
+      emailAddress: "",
     });
 
-    expect(newOrderNumber).to.equal(orderNumber);
-  });
-});
-
-describe("Check Stock Use Case Tests", () => {
-  beforeEach(function () {
-    DomainEvents.registerHandler(new MockHandler());
-  });
-
-  it("Should return fully stocked if order items are all in stock", async () => {
-    const testOrder = OrderFactory.Create(customerId, {
-      addressLine1: "Test",
-      postcode: "AA1 1AA",
-      country: "GB",
-    });
-
-    testOrder.details.addOrderItem("Pizza", 10, 1);
-
-    const orderRepo = new OrderRepositoryInMemoryImpl();
-    await orderRepo.addNew(testOrder);
-
-    const handler = new CheckOrderStockCommandHandler(
-      orderRepo,
-      new MockStockChecker(true),
-      new WinstonLogger()
-    );
-
-    const response = await handler.execute({
-      orderId: testOrder.orderNumber,
-      customerId: testOrder.customerId,
-    });
-
-    expect(response.fullyStocked).to.equal(true);
-  });
-
-  it("Should return fully stocked false if order items are all out of stock", async () => {
-    const testOrder = OrderFactory.Create(customerId, {
-      addressLine1: "Test",
-      postcode: "AA1 1AA",
-      country: "GB",
-    });
-
-    testOrder.details.addOrderItem("Pizza", 10, 1);
-
-    const orderRepo = new OrderRepositoryInMemoryImpl();
-    await orderRepo.addNew(testOrder);
-
-    const handler = new CheckOrderStockCommandHandler(
-      orderRepo,
-      new MockStockChecker(false),
-      new WinstonLogger()
-    );
-
-    const response = await handler.execute({
-      orderId: testOrder.orderNumber,
-      customerId: testOrder.customerId,
-    });
-
-    expect(response.fullyStocked).to.equal(false);
-  });
-});
-
-describe("Process Payment Use Case Tests", () => {
-  beforeEach(function () {
-    DomainEvents.registerHandler(new MockHandler());
-  });
-
-  it("Should return payment processed if payment service returns ok", async () => {
-    const testOrder = OrderFactory.Create(customerId, {
-      addressLine1: "Test",
-      postcode: "AA1 1AA",
-      country: "GB",
-    });
-
-    testOrder.details.addOrderItem("Pizza", 10, 1);
-
-    await testOrder.details.checkStock(new MockStockChecker(true));
-
-    const orderRepo = new OrderRepositoryInMemoryImpl();
-    await orderRepo.addNew(testOrder);
-
-    const handler = new ProcessPaymentCommandHandler(
-      orderRepo,
-      new MockPaymentProcessor(true),
-      new WinstonLogger()
-    );
-
-    const response = await handler.execute({
-      orderId: testOrder.orderNumber,
-      customerId: testOrder.customerId,
-    });
-
-    expect(response.success).to.equal(true);
-  });
-
-  it("Should return payment success false if payment processing fails", async () => {
-    const testOrder = OrderFactory.Create(customerId, {
-      addressLine1: "Test",
-      postcode: "AA1 1AA",
-      country: "GB",
-    });
-
-    testOrder.details.addOrderItem("Pizza", 10, 1);
-
-    await testOrder.details.checkStock(new MockStockChecker(true));
-
-    const orderRepo = new OrderRepositoryInMemoryImpl();
-    await orderRepo.addNew(testOrder);
-
-    const handler = new ProcessPaymentCommandHandler(
-      orderRepo,
-      new MockPaymentProcessor(false),
-      new WinstonLogger()
-    );
-
-    const response = await handler.execute({
-      orderId: testOrder.orderNumber,
-      customerId: testOrder.customerId,
-    });
-
-    expect(response.success).to.equal(false);
-  });
-
-  it("Should error if order has not yet been stock checked", async () => {
-    const testOrder = OrderFactory.Create(customerId, {
-      addressLine1: "Test",
-      postcode: "AA1 1AA",
-      country: "GB",
-    });
-
-    testOrder.details.addOrderItem("Pizza", 10, 1);
-
-    const orderRepo = new OrderRepositoryInMemoryImpl();
-    await orderRepo.addNew(testOrder);
-
-    const handler = new ProcessPaymentCommandHandler(
-      orderRepo,
-      new MockPaymentProcessor(false),
-      new WinstonLogger()
-    );
-
-    const result = await handler.execute({
-      orderId: testOrder.orderNumber,
-      customerId: testOrder.customerId,
-    });
-
-    expect(result.message).to.equal(
-      "Cannot process a payment that has not been stock checked."
-    );
+    expect(result.data.length).to.equal(0);
     expect(result.success).to.equal(false);
+    expect(result.friendlyMessage).to.equal(
+      "A valid email address must be provided."
+    );
+    expect(result.rowsAffected).to.equal(0);
+  });
+
+  it("Start Order Command - Should fail when an invalid email address is sent", async () => {
+    let handler = new StartOrderCommandHandler(eventBus);
+
+    let result = handler.handle({
+      emailAddress: "myemailaddress",
+    });
+
+    expect(result.data.length).to.equal(0);
+    expect(result.success).to.equal(false);
+    expect(result.friendlyMessage).to.equal(
+      "A valid email address must be provided."
+    );
+    expect(result.rowsAffected).to.equal(0);
+  });
+
+  it("Add Order Item Command - Should complete and publish event", async () => {
+    let calledEvent = "";
+
+    let mockEventBus = mock<Events>();
+
+    let mockOrders = mock<Orders>();
+
+    when(mockEventBus.publish(anything())).thenCall((callback) => {
+      calledEvent = callback.name;
+    });
+
+    when(mockOrders.getOrder("ORD1234")).thenReturn(
+      new Promise((res) => {
+        return res(new Order("ORD1234"));
+      })
+    );
+
+    let handler = new AddOrderItemCommandHandler(
+      instance(mockEventBus),
+      instance(mockOrders)
+    );
+
+    await handler.handle({
+      orderId: "ORD1234",
+      itemCode: "PIZZA001",
+      quantity: 1,
+    });
+
+    verify(mockEventBus.publish(anything())).once();
+    expect(calledEvent).to.equal("stock-check-requested");
+  });
+
+  it("Add Order Item Command - When Invalid Order Should Error", async () => {
+    let mockEventBus = mock<Events>();
+
+    let mockOrders = mock<Orders>();
+
+    let handler = new AddOrderItemCommandHandler(
+      instance(mockEventBus),
+      instance(mockOrders)
+    );
+
+    let commandResponse = await handler.handle({
+      orderId: "NOTAVALIDORDER",
+      itemCode: "PIZZA001",
+      quantity: 1,
+    });
+
+    verify(mockEventBus.publish(anything())).never();
   });
 });
